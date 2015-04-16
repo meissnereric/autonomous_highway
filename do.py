@@ -1,40 +1,57 @@
 from params import params
 
-def do(CRLC): #(car, lc) tuples of cars requesting lane changes. From How
-    if len(CRLC) == 0:
-        return null
-    CRLC = sortByPriority(CRLC)
-    CALC = [] #cars actually lane changing
-    CALC.append( CRLC.pop())
-    while CRLC:
-        v = CRLC.pop()
-        if not inConflict(CALC, v):
-            CALC.append(v)
-    return CALC
+def do(PS): #[ (Platoon, op[] ) ]
+    if len(PS) == 0:
+        return []
+    PS.sort(key = lambda p: p[0].priority)
+    CLC = [] #cars actually lane changing
+    CLC.append( PS.pop())
+    while PS:
+
+        v = PS.pop()
+        viewV(v)
+        # v =(Platoon, op[])
+        if not inConflict(CLC, v):
+            CLC.append(v)
+    return CLC
+
+def viewV(v):
+    print "plat[0] : op[0] " + str(v[0].position)  + " : " + str(v[1][0].position)
+
+def removeUniques(seq):
+        seen = set()
+        seen_add = seen.add
+        return [ x for x in seq if not (x in seen or seen_add(x))]
 
 #inconflict majorly uses lines 9-14 of Divya's algorithm 2
-def inConflict(calc, v):
+def inConflict(pls, v):
+    #pls == [ (Platoon ,op[] ) ]
+    # v = (Platoon, op[])
+
     #relevent cars
-    rc = [car for car in calc if car.position[1] == v.position[1] + 1
-                                or car.position[1] == v.position[1] + 2
-                                or car.position[1] == v.position[1] - 1
-                                or car.position[1] == v.position[1] - 2 ]
-    (vx,vy) = v.position
+    rp = [pl for pl in pls if pl[0].position[1] == v[0].position[1] + 1
+                                or pl[0].position[1] == v[0].position[1] + 2
+                                or pl[0].position[1] == v[0].position[1] - 1
+                                or pl[0].position[1] == v[0].position[1] - 2 ]
+    (vx,vy) = v[0].position
     
-    for c in rc:
+    #pair = (Platoon, op[])
+    for pair in rp:
+        c = pair[0]
+        # c = Platoon
         (cx,cy) = c.position
         if cx < vx:
-            yi = vx + params.laneVels[vy]*params.TurnTime + v.accel * 0.5 * params.TurnTime^2
-            yj = cx + params.laneVels[cy]*params.TurnTime + c.accel * 0.5 * params.TurnTime^2
+            yi = vx*params.cellLength + params.laneVels[vy]*params.turnTime + v[0].accel * 0.5 * params.turnTime**2
+            yj = cx*params.cellLength + params.laneVels[cy]*params.turnTime + c.accel * 0.5 * params.turnTime**2
         else:
-            yj = vx + params.laneVels[vy]*params.TurnTime + v.accel * 0.5 * params.TurnTime^2
-            yi = cx + params.laneVels[cy]*params.TurnTime + c.accel * 0.5 * params.TurnTime^2
+            yj = vx*params.cellLength + params.laneVels[vy]*params.turnTime + v[0].accel * 0.5 * params.turnTime**2
+            yi = cx*params.cellLength + params.laneVels[cy]*params.turnTime + c.accel * 0.5 * params.turnTime**2
         
         if yi > yj:
-            ds = yi - params.cellLength - yj
+            ds = yi - c.length - yj
         else:
-            ds = yj - cellLength - yi
+            ds = yj - c.length - yi
 
         if ds < 0:
-            return true
-    return false
+            return True
+    return False
