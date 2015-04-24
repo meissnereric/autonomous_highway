@@ -351,9 +351,10 @@ def costCSTotal(cs):
 def generateAccel(car, op):
     x_f = op.position[0] * params.cellLength
     x_0 = car.position[0] * params.cellLength
-    v_d = params.laneVels[car.position[1]] - params.laneVels[op.position[1]]
+    v_d = params.laneVels[op.position[1]] - params.laneVels[car.position[1]]
     t = params.turnTime
-    accel = 2 * (x_f - x_0 - v_d * t) / (t**2)
+    x_d = x_f - x_0
+    accel = 2 * (x_d - v_d * t) / (t**2)
     if accel > params.maxAccel or accel < params.maxDecel:
         print "accel -- " + str(accel) 
     return accel
