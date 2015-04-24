@@ -14,6 +14,7 @@ class Road:
         self.clc = []
         self.cars = []
         self.createLanes()
+        self.turn = -1
     
     def createLanes(self):        
         #createLanes
@@ -39,6 +40,7 @@ class Road:
         self.removeExtraCells()
 
     def updateRoad(self, dt):
+        self.turn += 1
         self.addNewCells(dt)
         self.addEnteringCars(dt)
         self.addContinuingCars(dt)
@@ -56,23 +58,22 @@ class Road:
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         self.cars.remove(car)
-        stats.numMadeCars[0] += 1
+        stats.numMadeCars[self.turn] += 1
         print 'Car made its exit: ' + str(car.position) + " : " + str(car.exit)
         
     def markMissedExit(self, car):
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         self.cars.remove(car)
-        stats.numMissedCars[0] += 1
-        print 'Car missed its exit: ' + str(car.position) + " : " + str(car.exit)
+        stats.numMissedCars[self.turn] += 1
+        print 'Car missed its exit: ' + str(car.position) + " : " + str(car.exit) + " : " + str(car.d_es) 
+        print "Car's target lane: " + str(car.targetLane)
 
     #Tested
     def updateLCs(self):
         for lc in self.clc:
-            print "platoon lc"
-            for i in range(len(lc[0].cars)):
-                print "lc(" + str(lc[0].cars[i].position) + "," + str(lc[1][i].position)
-                self.laneChange( (lc[0].cars[i], lc[1][i]) )
+            #print "lc car : op " + str(lc[0].position) + " : " + str(lc[1].position)
+            self.laneChange( (lc[0], lc[1]) )
 
     def addNewCells(self, dt):
         self.newCells = [0] * len(self.lanes)
@@ -165,7 +166,7 @@ class Road:
             self.cars.append(car)
             return True
         else:
-            print "Added a car to a cell that was already filled. (Cell:Lane) = " + str(car.position)
+            #print "Added a car to a cell that was already filled. (Cell:Lane) = " + str(car.position)
             return False
 
 
@@ -183,8 +184,10 @@ class Road:
     def laneChange(self, LC ):
         car = LC[0]
         cell = LC[1]
+        if abs(car.position[0] - cell.position[0]) > params.maxEpsilonLook:
+            print 'epsilon error. LC too far'
         if cell.filled:
-            print "Lane changing into a filled cell you fool!" + str(cell.position)
+            print "Lane changing into a filled cell you fool! "+ " " + str(car.position) + str(cell.position)
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         car.position = (cell.position)
@@ -192,10 +195,11 @@ class Road:
             self.lanes[cell.position[1]].cells[cell.position[0]].filled = True
 
     def addFCS(self, fcs):
-        p = Platoon(fcs[0])
-        self.FCS.append( (p, fcs[1]) )
-
-
+        #p = Platoon(fcs[0])
+        #self.FCS.append( (p, fcs[1]) )
+        for pair in fcs:
+            if pair:
+                self.FCS.append( pair )
 ############### End Road class ##############
 
 class Cell:
@@ -218,16 +222,19 @@ class Car:
         Car.id += 1
         self.id = Car.id
         self.epsilons = []
+        self.accel = 0
+        self.length = params.cellLength
 
 class Lane:
     def __init__(self, velocity):
         self.cells = []
         self.openings = []
         self.velocity = velocity
-
-    def createOpenings(self, cells):
-        self.openings = [cell for cell in cells if not cell.filled]
-
+    def getCellByX(self, x):
+        if len(self.cells) > x:
+            return self.cells[x]
+        else:
+            return
 class Platoon:
     def __init__(self, cars):
         cars.sort(key = lambda c: c.position[0])

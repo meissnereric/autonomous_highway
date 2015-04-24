@@ -19,7 +19,7 @@ class RoadParameters:
     exits = [150, 300, 450, 600]#in cells
     maxLaneLength = exits[len(exits)-1] #in cells
     entrances = [exit - 25 for exit in exits]#in cells
-    percentContinuing = 0.5 #percentage of new cars on a road continuing
+    percentContinuing = 0.9 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
 
@@ -37,7 +37,7 @@ def getTurnTime(vel):
     v_max = v_l + params.maxDeltaVel
     t_a  = (v_max - v_l) / a #time to accelerate to max velocity
     x_a = v_l * t_a + 0.5 * a * (t_a)**2 #car position when max velocity is reached
-    t_max = (pi * b - x_a ) / v_max 
+    t_max = (pi *( b - x_a) ) / v_max 
     return t_a + t_max
 
 params = RoadParameters()
@@ -46,9 +46,15 @@ class Statistics:
     lcCosts = []
     numMissedCars = []
     numMadeCars = []
+    carsRequestingLC = []
+    carsInCS = []
+    carsMakingLC = []
     
     def newTurn(self, dt):
         self.numMissedCars.append(0)
         self.numMadeCars.append(0)
+        self.carsRequestingLC.append(0)
+        self.carsInCS.append(0)
+        self.carsMakingLC.append(0)
 
 stats = Statistics()

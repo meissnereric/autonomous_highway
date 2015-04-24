@@ -7,23 +7,30 @@ from params import *
 
 
 params.turnTime = max([getTurnTime(vel) for vel in params.laneVels])
-def tests(myRoad):
-    stats.newTurn(params.turnTime)
-    myRoad.updateRoad(params.turnTime)
-    #viewCars(myRoad)
-    when.When(myRoad)
-    how.How(myRoad)
-    myRoad.clc = do.do(myRoad.FCS)
-    myRoad.updateLCs()
-    myRoad.cleanRoad()
-    print "Cars missed exit: " + str(stats.numMissedCars[0])
-    print "Cars made exit: " + str(stats.numMadeCars[0])
-    print "Cars on road: " + str(len(myRoad.cars))
+def tests(iters, myRoad):
+    for i in range(iters):        
+        stats.newTurn(params.turnTime)
+        myRoad.updateRoad(params.turnTime)
+        #viewCars(myRoad)
+        when.When(myRoad)
+        stats.carsRequestingLC[myRoad.turn] = len([car for car in myRoad.cars if car.position[1] != car.targetLane])
+        how.How(myRoad)
+        stats.carsInCS[myRoad.turn] = len(myRoad.FCS)
+        myRoad.clc = do.do(myRoad.FCS)
+        stats.carsMakingLC[myRoad.turn] = len(myRoad.clc)
+        myRoad.updateLCs()
+        myRoad.cleanRoad()
+        print "Cars requesting LC: " + str(stats.carsRequestingLC[myRoad.turn]) #after when
+        print "Cars in CS: " + str(stats.carsInCS[myRoad.turn]) #after how
+        print "Cars making LC: " + str(stats.carsMakingLC[myRoad.turn]) #after do
+        print "Cars missed exit: " + str(stats.numMissedCars[myRoad.turn])
+        print "Cars made exit: " + str(stats.numMadeCars[myRoad.turn])
+        print "Cars on road: " + str(len(myRoad.cars))
 
 def viewCar(car):
     print car
     print "Position : Exit : targetLane : epsilons : d_es"
-    print str(car.position) + " : " +str(car.exit) + " : " + str(car.targetLane) + " : " + str(car.d_es)
+    print str(car.position) + " : " +str(car.exit * params.cellLength) + " : " + str(car.targetLane) + " : " + str(car.d_es)
 
 def viewCars(road):
     for lane in reversed(road.lanes):
@@ -60,7 +67,5 @@ def timeSimulation():
         print str(turn) + " : " + str(totalTime)
 
 myRoad = road.Road()
-tests(myRoad)
-#viewCars(myRoad)
 
 

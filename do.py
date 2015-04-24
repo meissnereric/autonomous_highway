@@ -9,14 +9,10 @@ def do(PS): #[ (Platoon, op[] ) ]
     while PS:
 
         v = PS.pop()
-        viewV(v)
-        # v =(Platoon, op[])
+        # v =  (car, op)[] 
         if not inConflict(CLC, v):
             CLC.append(v)
     return CLC
-
-def viewV(v):
-    print "plat[0] : op[0] " + str(v[0].position)  + " : " + str(v[1][0].position)
 
 def removeUniques(seq):
         seen = set()

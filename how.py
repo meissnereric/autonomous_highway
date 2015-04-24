@@ -1,44 +1,5 @@
 from params import params
-
-
-def How(road):
-    ActiveLanes = makeActiveLanes(road)
-    tempCars = []
-    if not ActiveLanes:
-        return 
-    ActiveLanes.sort()
-    OS = getOpeningSets(ActiveLanes, road)
-    OS.sort(key = lambda os: os[0].position[1], reverse=True)
-    for y in range(len(params.laneVels)):
-        tempCars = [car for car in road.cars if car.position[1] == y + 1
-                                                or car.position[1] == y - 1]
-        tempCars.sort(key = lambda c: c.position[0])
-        for os in OS:
-            if os[0].position[1] == y:
-                os.sort(key = lambda op: op.position[0])
-                (carsUp, carsDown) = getCars(tempCars, os)
-                if carsUp:
-                    carsUp.sort(key = lambda c: c.position[0])
-                if carsDown:
-                    carsDown.sort(key = lambda c: c.position[0])
-                CS = makeCarSets(carsUp, os)
-                CS.extend(makeCarSets(carsDown, os))
-                CS = trimCS(CS)
-                finalCS = getBestCS(CS)
-                if finalCS:
-                    road.addFCS(finalCS)
-                    removeCars(tempCars, finalCS)
-
-#should really only do things if len(os) > params.maxEpsilonLook
-def trimCS(CS):
-    for cs in CS:
-        cars = cs[0]
-        ops  = cs[1]
-        for i in range(len(cars)):
-            if abs(cars[i].position[0] - ops[i].position[0]) > params.maxEpsilonLook:
-                CS.remove(cs)
-                break
-    return CS
+import copy 
 
 #get OSs for a lane
 def getOpeningSets(lane, road):
@@ -59,6 +20,12 @@ def removeCars(tempCars, cars):
     for car in cars:
         tempCars.remove(car)
 
+def removeCS(tempCars, cs):
+    for pair in cs:
+        if pair[0] in tempCars:
+            tempCars.remove(pair[0])
+        else:
+            cs.remove(pair)
 def makeActiveLanes(road):
     ActiveLanes = []
     for car in road.cars:
@@ -67,236 +34,328 @@ def makeActiveLanes(road):
                 ActiveLanes.append(car.targetLane)
     return ActiveLanes
 
-#def makeCarSets(cars, os):
- #   if not cars:
- #       return []
- #   CS = []
-  #  cars.sort(key = lambda c: c.position[0])
-   # os.sort(key = lambda c: c.position[0])
-    #return possible subsets of cars filling the openings
-  #  if len(os) < len(cars):
-  #      for i in range(len(cars) - len(os)):
-  #          pair = (cars[0+i : len(os) + i], os)
-   #         CS.append( pair )
-    #return car sets going to all possible contiguous combinations in the openings
-    #elif len(os) == len(cars):
-    #    CS.append( (cars,os))
-    #else:
-     #   for i in range(len(os) - len(cars)):
-       #     pair = (cars, os[0+i : len(cars)+i])
-       #     CS.append( pair )
-   # return CS
-
-#def sortCS(cs):
-#if not cs:
-#return 0
-#    else:
-#        cars = cs[0]
-#        ops = cs[1]
-#        return max([abs(car.position[0] - ops[i].position[0]) for i,car in enumerate(cars)])
 
 def printCS(cs):
-    cars = cs[0]
-    ops = cs[1]
-    #print ""
-    #print "carLane : opLane -- " + str(cars[0].position[1]) + " : " + str(ops[0].position[1])
-    s = ""
-    if len(cars) != len(ops):
-        print "cars != ops length"
-    for i in range(len(cars)):
-        s += (str(cars[i].position[0]) + " ")
-    print s + " ***"
-    s = ""
-    for i in range(len(cars)):
-        s += (str(ops[i].position[0]) + " ")
-    print s
+    cars = ops = ""
+    for pair in cs:
+        cars += (str(pair[0].position) + " ")
+        ops += (str(pair[1].position) + " ")
+    print cars
+    print ops
 
 #4-16-15 changes to how
-def newHow(road):
+# newHow 
+def How(road):
+    maxCost = 10000000
     ActiveLanes = makeActiveLanes(road)
     if not ActiveLanes:
         return
     ActiveLanes.sort()
+    #print ActiveLanes
     for lane in ActiveLanes:
         OS = getOpeningSets(lane, road)
         OS.sort(key = lambda os: os[0].position[0])
-        upCars = []
-        downCars = []
+        upCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]+1]
+        downCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]-1]
         for os in OS:
             (csUp, costUp) = getBestLaneCS(upCars, os, road.lanes[lane])#todo getCars + makeCS
             (csDown, costDown) = getBestLaneCS(downCars, os, road.lanes[lane])
-            if costUp < costDown:
-                road.addFCS(csUp)
-                removeCars(upCars, csUp)
-            else
-                road.addFCS(csDown)#todo don't add as platoon or only some
-               # removeCars(downCars, csDown)#todo generally remove cars
+            csUp = list(set(csUp))
+            csDown = list(set(csDown))
+            if len(csUp) == len(csDown):
+                if costUp < costDown and maxCost > costUp > 0 and csUp:
+                    realCars = getRealCars(upCars, csUp)
+                    removeCS(upCars, realCars)
+                    print 'addFCS Up cuz costs: ' + str(costUp)
+                    printCS(realCars)
+                    road.addFCS(realCars)
+                elif csDown:
+                    print 'addFCS Down cuz costs' + str(costDown)
+                    realCars = getRealCars(downCars, csDown)
+                    removeCS(downCars, realCars)
+                    printCS(realCars)
+                    road.addFCS(realCars)#todo don't add as platoon or only some
+            else:
+                if len(csUp) > len(csDown):
+                    realCars = getRealCars(upCars, csUp)
+                    print 'addFCS Up due to length: ' + str(len(csUp))
+                    removeCS(upCars, realCars)
+                    printCS(realCars)
+                    road.addFCS(realCars)
+                else:
+                    realCars = getRealCars(downCars, csDown)
+                    print 'addFCS Down due to length: ' + str(len(csDown))
+                    removeCS(downCars, realCars)
+                    printCS(realCars)
+                    road.addFCS(realCars)#todo don't add as platoon or only some
 
+def getRealCars(real, fake):
+    realCS = []
+    for pair in fake:
+        for car in real:
+            if car.position == pair[0].position:
+                realCS.append( (car, pair[1]))
+                break
+    return realCS
 
-def getBestLaneCS(cars, os, lane):
-    (blockUp, blockDown, zU, zD) = getBlockingSets(cars,os)
-    
-def getBlockingSets(cars, os):
+def getBestLaneCS(permCars, os, lane):
+    cars = copy.copy(permCars)
+    maxCost = 10000000
+    if not cars:
+        return ([], maxCost)
     CS = []
-    blockCars = [car for car in tempCars if car.position[0] <= os[len(os)-1].position[0]
+    cost = 0.0
+    blockCars = [car for car in cars if car.position[0] <= os[len(os)-1].position[0]
                                         and car.position[0] >= os[0].position[0] ]
     Z = len(os) - len(blockCars)
-    CS.append([ (car, lane.getCellByX(car.position[0])) for car in blockCars])#todo lane.getCellByX(x)
+    blockCars = [car for car in blockCars if car.targetLane == os[0].position[1]]
+    
+    #todo update blockCar costs and maybe add the cars to their "safe zone" spots when able
+    bcCS = [ (car, lane.getCellByX(car.position[0])) for car in blockCars]
+    
+    for cs in bcCS:
+        CS.append(cs)
+    
     removeCars(cars, blockCars)
-    while cars and len(CS) < len(os):
-
-
-
-
-##########################GetCars utilities  ########################################
-#pg 107-108
-def getCars(tempCars, os):
-    blockUp = [car for car in tempCars if car.position[1] == os[0].position[1] + 1
-                                        and car.position[0] <= os[len(os)-1].position[0]
-                                        and car.position[0] >= os[0].position[0] ]
-
-    blockDown = [car for car in tempCars if car.position[1] == os[0].position[1] - 1
-                                        and car.position[0] <= os[len(os)-1].position[0]
-                                        and car.position[0] >= os[0].position[0] ]
+    (CR, CL) = doEpsilonPass(cars, os)
+    (CR,CL) = doEBPass(CR, CL, os)
+    (CR, CL) = doZPass(CR, CL, os)
+    CR.sort(key = lambda c: c.position[0]) #CR[0] is min X
+    CL.sort(key = lambda c: c.position[0], reverse=True) #CL[0] is max X
     
-    z_u = len(os) - len(blockUp)
-    z_d = len(os) - len(blockDown)
-    Z = (z_u, z_d)
-    
-   # print "TL: " + str(os[0].position[1]) + " blockUp : " + str(len(blockUp))
-   # print "blockDown : " + str(len(blockDown))
 
-    blockUp = [car for car in blockUp if car.targetLane == os[0].position[1]]
-    blockDown = [car for car in blockDown if car.targetLane == os[0].position[1]]
+    bound = 0
+    while (CR or CL) and len(CS) < len(os) and bound < len(cars) :
+        bound += 1
+        rCost = lCost = maxCost
+        nrc = nlc = []
+        rcs = lcs = []
+        if CR:
+            nrc = CR[0] #nearest right car
+        if CL:
+            nlc = CL[0] #left
 
-    (CRU, CLU, CRD, CLD) = firstPassCars = doFirstPass(tempCars, os)
-    (sRU, sLU, sRD, sLD) = SPC = doSecondPass(firstPassCars,os)
-    (CRU, CLU, CRD, CLD) = finalCars = trimLengths(SPC, Z)
-
-   # print "TL: " + str(os[0].position[1]) + " CRU/CLU/blockUp : " + str(len(CRU)) + " : " + str(len(CLU)) + " : " + str(len(blockUp))
-    #print "CRD/CLD/blockDown : " + str(len(CRD)) + " : " + str(len(CLD)) + " : " + str(len(blockDown))
-    #print ' '
-    CU = [] 
-    if blockUp:
-        CU.extend(blockUp)
-    if CRU:
-        CU.extend(CRU)
-    if CLU:
-        CU.extend(CLU)
-
-    CD = [] 
-    if blockDown:
-        CD.extend(blockDown)
-    if CRD:
-        CD.extend(CRD)
-    if CLD:
-        CD.extend(CLD)
-
+        if nrc:
+            (rcs, rCost) = costShift(CS, nrc, os[len(os)-1], os, lane)
+     #       print 'rCost: ' + str(rCost)
+      #      print 'len(rcs) immed. after costShift return: ' + str(len(rcs))
+        if nlc:
+            (lcs, lCost) = costShift(CS, nlc, os[0], os, lane)
+       #     print 'lCost: ' + str(lCost)
+        #    print 'len(lcs) immed. after costShift return: ' + str(len(lcs))
 
         
 
+        if 0 <= rCost < lCost and rCost != maxCost and rcs:
+         #   print "len CS/rcs: " + str(len(CS)) + " : " + str(len(rcs))
+            
+            CS = rcs
+            cost += rCost
+            CR.remove(nrc)
+            cars.remove(nrc)
+        elif maxCost != lCost >= 0 and lcs:
+           # print "len lcs: " + str(len(lcs))
+          #  print "len CS/lcs: " + str(len(CS)) + " : " + str(len(lcs))
+            CS = lcs
+            cost += lCost
+            CL.remove(nlc)
+            cars.remove(nlc)
+        elif lCost == -1 or rCost == -1:
+            s = ""
+            for op in os:
+                s += str(op.position) + " "
+            #print s
+           # print 'os full'
+            break
 
-    CU.sort(key= lambda c: c.position[0])
-    CD.sort(key= lambda c: c.position[0])
-        
-    return (CU, CD)
+    #print "lenCS: " + str(len(CS)) + " cost: " + str(cost)
+    #printCS(CS)
+    #print ''
+    return CS, cost
 
+def costShift(CS, newCar, op, os, lane):
+    nCS = CS
+    right = left = False
+    #first car - no blocking
+    if not nCS or not nCS[0]:
+        #print 'not CS'
+        nCS.append( (newCar, op))
+        return (nCS, costCS( (newCar, op) ))
 
-def doFirstPass(tempCars, os):
-    CRU = [car for car in tempCars if car.position[0] <= os[len(os)-1].position[0] + params.maxEpsilonLook
-                                    and car.position[0] > os[len(os)-1].position[0] 
-                                    and car.position[1] == os[0].position[1] + 1 ]
+    #car from the right
+    if newCar.position[0] > op.position[0]:
+        nCS.sort(key = lambda cs: cs[1].position[0])
+        right = True
+    else: #left
+        nCS.sort(key = lambda cs: cs[1].position[0], reverse=True)
+        left = True
 
-    CLU = [car for car in tempCars if car.position[0] >= os[0].position[0] - params.maxEpsilonLook
-                                    and car.position[0] < os[0].position[0] 
-                                    and car.position[1] == os[0].position[1] + 1 ]
-    CRD = [car for car in tempCars if car.position[0] <= os[len(os)-1].position[0] + params.maxEpsilonLook
-                                    and car.position[0] > os[len(os)-1].position[0] 
-                                    and car.position[1] == os[0].position[1] - 1 ]
+    prevPos = 0
+    currPos = nCS[-1][1].position[0] #[0] -> first pair , [1] opening of it
+    if currPos < op.position[0] and right:
+        nCS.append( (newCar, op))
+        #print 'right not blocked' + " " + str(currPos) + " " + str(op.position[0])
+        return (nCS, costCS(nCS[-1]))
+    elif currPos > op.position[0] and left:
+        nCS.append( (newCar, op))
+        #print 'left not blocked' + " " + str(currPos) + " " + str(op.position[0])
+        return (nCS, costCS(nCS[-1]))
 
-    CLD = [car for car in tempCars if car.position[0] >= os[0].position[0] - params.maxEpsilonLook
-                                    and car.position[0] < os[0].position[0] 
-                                    and car.position[1] == os[0].position[1] - 1 ]
+    #check all the cars currently changing for placements
+    elif right:
+        #print 'rightShift'
+        rOp = getNearestOpening(nCS, os, left)
+        if not rOp:
+            #print 'noOp'
+            return(nCS, 0)
+        shiftingCars = [pair for pair in nCS if pair[1].position[0] > rOp.position[0]]
+        notShiftingCars = [pair for pair in nCS if not (pair[1].position[0] > rOp.position[0]) ]
+        #print "1111 len ncs/shift/nShift: "
+        #print str(len(nCS)) + " : " + str(len(shiftingCars)) + " : " + str(len(notShiftingCars))
+        (shiftedCS, cost) = posShift(shiftingCars, newCar, op, lane)
+        nCS = notShiftingCars + shiftedCS
+        nCS.append( (newCar, op))
+        return (nCS, cost)
+
+    elif left:
+        #print 'leftShift'
+        lOp = getNearestOpening(nCS, os, left)
+        if not lOp:
+          #  print 'noOp'
+            return(nCS, 0)
+        shiftingCars = [pair for pair in nCS if pair[1].position[0] < lOp.position[0]]
+        notShiftingCars = [pair for pair in nCS if not (pair[1].position[0] < lOp.position[0]) ]
+       # print "1111 len ncs/shift/nShift: "
+       # print str(len(nCS)) + " : " + str(len(shiftingCars)) + " : " + str(len(notShiftingCars))
+        (shiftedCS, cost) = posShift(shiftingCars, newCar, op, lane)
+        nCS = shiftedCS + notShiftingCars
+        nCS.insert( 0, (newCar, op))
+        return (nCS, cost)
+
+   # print '-1'
+    return (nCS, -1)
     
-    return (CRU, CLU, CRD, CLD)
+#page 135
+def getNearestOpening(CS, os, left):
+    #print "len(CS) in getNearOp: "+ str( len(CS))
+    #print "len(os) in getNearOp: "+ str( len(os))
+    if left:
+        CS.sort(key = lambda cs: cs[1].position[0])
+        os.sort(key = lambda op: op.position[0])
+    else: #right
+        CS.sort(key = lambda cs: cs[1].position[0], reverse=True)
+        os.sort(key = lambda op: op.position[0], reverse=True)
 
-def trimLengths((CRU, CLU, CRD, CLD), (z_u, z_d)):
+    pairings = []
+    contiguous = []
+    for i in range(len(os)):
+        if i < len(CS):
+            pairings.append((CS[i], os[i]))
+        else:
+            contiguous.append( os[i])
     
-    if(len(CRU) > z_u):
-        CRU = CRU[0:z_u]
-    if(len(CLU) > z_u):
-        CLU = CLU[len(CLU) - z_u : len(CLU)]
-    if(len(CRD) > z_d):
-        CRD = CRD[0:z_d]
-    if(len(CLD) > z_d):
-        CLD = CLD[len(CLD) - z_d : len(CLD)]
-    return (CRU, CLU, CRD, CLD)
+
+    disjointPairings = [p for p in pairings if p[0][1].position[0] != p[1].position[0] ]  
+    if disjointPairings: #there is an opening
+        if disjointPairings[0][0][1].position[0] <= contiguous[0].position[0]:
+            return disjointPairings[0][0][1]
+        else:
+            return contiguous[0]
+    elif contiguous:
+        return contiguous[0]
+    else: #no openings
+        return
+
+def posShift(CS, newCar, op, lane):
+    ncs = []
+    cost = 0
+    #from the left
+    if newCar.position[0] < op.position[0]:
+        shift = 1
+    else:
+        shift = -1
+    for cs in CS:
+        newCell = lane.getCellByX(cs[1].position[0]+shift)
+        ncs.append( ( cs[0], newCell ) )
+        if ncs[len(ncs)-1]:
+            cost += costCS( ncs[len(ncs)-1] )
+    return (ncs, cost)
+
+##########################Get Cars utilities  ########################################
+def doEpsilonPass(tempCars, os):
+    CR = [car for car in tempCars if car.position[0] <= os[len(os)-1].position[0] + params.maxEpsilonLook
+                    and car.targetLane == os[0].position[1]                
+                    and car.position[0] > os[len(os)-1].position[0] ]
+
+    CL = [car for car in tempCars if car.position[0] >= os[0].position[0] - params.maxEpsilonLook
+                                and car.targetLane == os[0].position[1]                
+                                and car.position[0] < os[0].position[0] ]
     
+    return (CR, CL)
+
+def doZPass(CR, CL, z):
+    
+    if(len(CR) > z):
+        CR = CR[0:z]
+    if(len(CL) > z):
+        CL = CL[len(CL) - z : len(CL)]
+    return (CR, CL)
+
 #pg 108
-def doSecondPass((fRU, fLU, fRD, fLD), os):
+def doEBPass(fR, fL, os):
     
-    ebRU = [car.position[0] for car in fRU if car.targetLane == car.position[1] ]
-    if ebRU:
-        ebRU = min(ebRU)
-        sRU = [car for car in fRU if car.position[0] < ebRU]
+    ebR = [car.position[0] for car in fR if car.targetLane == car.position[1] ]
+    if ebR:
+        ebR = min(ebR)
+        sR = [car for car in fR if car.position[0] < ebR]
     else:
-        sRU = fRU
+        sR = fR
 
-    ebLU = [car.position[0] for car in fLU if car.targetLane == car.position[1] ]
-    if ebLU:
-        ebLU = min(ebLU)
-        sLU = [car for car in fLU if car.position[0] > ebLU]
+    ebL = [car.position[0] for car in fL if car.targetLane == car.position[1] ]
+    if ebL:
+        ebL = min(ebL)
+        sL = [car for car in fL if car.position[0] > ebL]
     else:
-        sLU = fLU
-
-    ebRD = [car.position[0] for car in fRD if car.targetLane == car.position[1] ]
-    if ebRD:
-        ebRD = min(ebRD)
-        sRD = [car for car in fRD if car.position[0] < ebRD]
-    else:
-        sRD = fRD
-
-    ebLD = [car.position[0] for car in fLD if car.targetLane == car.position[1] ]
-    if ebLD:
-        ebLD = min(ebLD)
-        sLD = [car for car in fLD if car.position[0] > ebLD]
-    else:
-        sLD = fLD
+        sL = fL
 
 
 
-    return (sRU, sLU, sRD, sLD)
+    return (sR, sL)
     
 ##############################End GetCars related functions ###############################
 
 
 ##########################Costs #################################
 #Not the most foolproof getBestCS, so if it breaks don't be surprised :)
-def getBestCS(CS):
-    cutCS = [cs for cs in CS if cs != ([],[])]
-    csCosts = [costCS(cs) for cs in cutCS]
-    minCosts = [cs for i, cs in enumerate(cutCS) if csCosts[i] == min(csCosts)]
-    if minCosts:
-        return minCosts[0]
-    else:
-        return 
-def costCar(car, op):
-    a = params.turnTime ** 2 
-    b = params.laneVels[op.position[1]] - params.laneVels[car.position[1]]
-    return car.priority * (car.accel - ( b / a ))
+#def getBestCS(CS):
+#    cutCS = [cs for cs in CS if cs != ([],[])]
+#    csCosts = [costCS(cs) for cs in cutCS]
+#    minCosts = [cs for i, cs in enumerate(cutCS) if csCosts[i] == min(csCosts)]
+#    if minCosts:
+#        return minCosts[0]
+#    else:
+#        return 
+def costCS((car, op)):
+    car.accel = generateAccel(car, op)
+    t = params.turnTime ** 2 
+    d_v = params.deltaVel
+    return car.priority * abs((car.accel - ( d_v / t )) ** 2)
 
-def costCS(cs):
+def costCSTotal(cs):
     for i, car in enumerate(cs[0]):
         car.accel = generateAccel(car, cs[1][i])
 
     return sum([costCar(car, cs[1][i]) for i, car in enumerate(cs[0])])
 
+#pg 136
 def generateAccel(car, op):
-    x_f = op.position[0] * params.cellLength - car.position[0] * params.cellLength
-    x_0 = 0
-    v_0 = params.laneVels[car.position[1]]
+    x_f = op.position[0] * params.cellLength
+    x_0 = car.position[0] * params.cellLength
+    v_d = params.laneVels[car.position[1]] - params.laneVels[op.position[1]]
     t = params.turnTime
-    accel = 2 * (x_f - v_0 * t) / (t**2)
+    accel = 2 * (x_f - x_0 - v_d * t) / (t**2)
+    if accel > params.maxAccel or accel < params.maxDecel:
+        print "accel -- " + str(accel) 
     return accel
 
 def removeUniques(seq):
