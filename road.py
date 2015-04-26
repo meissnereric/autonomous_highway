@@ -40,10 +40,19 @@ class Road:
         self.removeExtraCells()
 
     def updateRoad(self, dt):
+        j=10
         self.turn += 1
+        print j
+        j += 1
         self.addNewCells(dt)
+        print j
+        j += 1
         self.addEnteringCars(dt)
+        print j
+        j += 1
         self.addContinuingCars(dt)
+        print j
+        j += 1
         self.cars.sort(key = lambda c: c.position[0])
 
     def updateExitingCars(self):
@@ -54,12 +63,23 @@ class Road:
                 else:
                     self.markMissedExit(car)
 
+    def removeOOBCars(self):
+        for car in self.cars:
+            if car.position[0] > params.maxLaneLength:
+                if car.position[1] == 0:
+                    print 'oob car exit'
+                    self.exitCar(car)
+                else:
+                    print 'oob car missed exit'
+                    self.markMissedExit(car)
+                #todo update stats for deleted cars
+
     def exitCar(self, car):
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         self.cars.remove(car)
         stats.numMadeCars[self.turn] += 1
-        print 'Car made its exit: ' + str(car.position) + " : " + str(car.exit)
+        #print 'Car made its exit: ' + str(car.position) + " : " + str(car.exit)
         
     def markMissedExit(self, car):
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
@@ -67,7 +87,8 @@ class Road:
         self.cars.remove(car)
         stats.numMissedCars[self.turn] += 1
         print 'Car missed its exit: ' + str(car.position) + " : " + str(car.exit) + " : " + str(car.d_es) 
-        print "Car's target lane: " + str(car.targetLane)
+        print "Car's target lane / priority: " + str(car.targetLane) + " : " + str(car.priority)
+        print car
 
     #Tested
     def updateLCs(self):
@@ -89,11 +110,6 @@ class Road:
             for j, cell in enumerate(self.lanes[y].cells):
                     cell.position = (j, cell.position[1])
 
-    def removeOOBCars(self):
-        for car in self.cars:
-            if car.position[0] > params.maxLaneLength:
-                self.markMissedExit(car)
-                #todo update stats for deleted cars
 
     def removeExtraCells(self):
         for lane in self.lanes:
@@ -102,13 +118,16 @@ class Road:
 
     def addContinuingCars(self, dt):
         numNewCars = int(dt * params.percentContinuing * params.flow)
+        print numNewCars
         for i in range(numNewCars):
             exit = randint(0,len(params.exits)-1)
             lane = self.getLane(exit)
             cell = randint(0, self.newCells[lane]-1)
-            while not self.addToCell(Car(cell, lane, params.exits[exit]), self.lanes[lane]):
+            j = 0
+            while not self.addToCell(Car(cell, lane, params.exits[exit]), self.lanes[lane]) and j < numNewCars * 3:
                 cell = randint(0, self.newCells[lane]-1)
                 lane = self.getLane(exit,cell)
+                j += 1
 
     
     def addEnteringCars(self, dt):
@@ -186,8 +205,11 @@ class Road:
         cell = LC[1]
         if abs(car.position[0] - cell.position[0]) > params.maxEpsilonLook:
             print 'epsilon error. LC too far'
+            print car.position
+            print cell.position
         if cell.filled:
             print "Lane changing into a filled cell you fool! "+ " " + str(car.position) + str(cell.position)
+            return
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         car.position = (cell.position)
@@ -231,10 +253,14 @@ class Lane:
         self.openings = []
         self.velocity = velocity
     def getCellByX(self, x):
+        if x < 0:
+            print 'getCellByX where x < 0: ' + str(x)
+            return False
         if len(self.cells) > x:
-            return self.cells[x]
+                return self.cells[x]
         else:
-            return
+            print 'getCellByX where x > len(self.cells): ' + str(x)
+            return False
 class Platoon:
     def __init__(self, cars):
         cars.sort(key = lambda c: c.position[0])

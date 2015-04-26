@@ -20,9 +20,9 @@ def When(road):
 def getEpsilons(car, road):
     epsilons = []
     times = []
-    R = getR(road)
+    R = params.rAlpha * getR(road)
+    T = params.turnTime #todo move this to road.py and call once a turn
     for lane in range(car.position[1] + 1):
-        T = params.turnTime #todo move this to road.py and call once a turn
         epsilons.append(R * T * params.laneVels[lane])
     return epsilons
 

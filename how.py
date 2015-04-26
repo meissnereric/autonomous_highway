@@ -119,10 +119,33 @@ def getBestLaneCS(permCars, os, lane):
     removeCars(cars, blockCars)
     (CR, CL) = doEpsilonPass(cars, os)
     (CR,CL) = doEBPass(CR, CL, os)
-    (CR, CL) = doZPass(CR, CL, os)
+    (CR, CL) = doZPass(CR, CL, Z, os)
+    for car in CR:
+        if car.targetLane == car.position[1]:
+            print 'whyyy are you still in CR!'
+    for car in CL:
+        if car.targetLane == car.position[1]:
+            print 'whyyy are you still in CL!'
     CR.sort(key = lambda c: c.position[0]) #CR[0] is min X
     CL.sort(key = lambda c: c.position[0], reverse=True) #CL[0] is max X
+    CR = list(set(CR))
+    CL = list(set(CL))
     
+    if CR or CL:
+        print 'os / CR / CL'
+        s=""
+        for op in os:
+            s += str(op.position) + " "
+        print s
+        s=""
+        for car in CR:
+            s += str(car.position) + " "
+        print s
+        s=""
+        for car in CL:
+            s += str(car.position) + " "
+        print s
+        print ''
 
     bound = 0
     while (CR or CL) and len(CS) < len(os) and bound < len(cars) :
@@ -130,24 +153,62 @@ def getBestLaneCS(permCars, os, lane):
         rCost = lCost = maxCost
         nrc = nlc = []
         rcs = lcs = []
+        #print CR
+        #print CL
+        #print CS
         if CR:
             nrc = CR[0] #nearest right car
         if CL:
             nlc = CL[0] #left
-
-        if nrc:
-            (rcs, rCost) = costShift(CS, nrc, os[len(os)-1], os, lane)
-     #       print 'rCost: ' + str(rCost)
-      #      print 'len(rcs) immed. after costShift return: ' + str(len(rcs))
-        if nlc:
-            (lcs, lCost) = costShift(CS, nlc, os[0], os, lane)
-       #     print 'lCost: ' + str(lCost)
-        #    print 'len(lcs) immed. after costShift return: ' + str(len(lcs))
-
+        try:
+            if nrc:
+                if nrc.targetLane != os[0].position[1]:
+                    print 'target lane of nrc not right'
+                for cs in CS:
+                    if nrc == cs[0]:
+                        print 'force remove nrc'
+                        CR.remove(nrc)
+                        raise Exception('nlc','remove')
+                op1 = os[0]
+                op2 = os[len(os)-1]
+                if op1.position[0] < op2.position[0]:
+                    op = op2
+                else:
+                    op = op1
+                (rcs, rCost) = costShift(CS, nrc, op, os, lane)
+                if not rCost:
+                    return (CS, costCSTotal(CS))
+                #print 'rcs after costShift'
+                #printCS(rcs)
+                #print 'rCost: ' + str(rCost)
+                #print 'len(rcs) immed. after costShift return: ' + str(len(rcs))
+            if nlc:
+                if nlc.targetLane != os[0].position[1]:
+                    print 'target lane of nlc not right'
+                for cs in CS:
+                    if nlc == cs[0]:
+                        print 'force remove nlc'
+                        CL.remove(nlc)
+                        raise Exception('nlc','remove')
+                op1 = os[0]
+                op2 = os[len(os)-1]
+                if op1.position[0] > op2.position[0]:
+                    op = op2
+                else:
+                    op = op1
+                (lcs, lCost) = costShift(CS, nlc, op, os, lane)
+                if not lCost:
+                    return (CS, costCSTotal(CS))
+               # print 'lcs after costShift'
+               # printCS(lcs)
+               # print 'lCost: ' + str(lCost)
+               # print 'len(lcs) immed. after costShift return: ' + str(len(lcs))
+        except Exception:
+            continue
         
 
         if 0 <= rCost < lCost and rCost != maxCost and rcs:
-         #   print "len CS/rcs: " + str(len(CS)) + " : " + str(len(rcs))
+            #print "len CS/rcs: " + str(len(CS)) + " : " + str(len(rcs))
             
             CS = rcs
             cost += rCost
@@ -155,7 +216,7 @@ def getBestLaneCS(permCars, os, lane):
             cars.remove(nrc)
         elif maxCost != lCost >= 0 and lcs:
            # print "len lcs: " + str(len(lcs))
-          #  print "len CS/lcs: " + str(len(CS)) + " : " + str(len(lcs))
+            #print "len CS/lcs: " + str(len(CS)) + " : " + str(len(lcs))
             CS = lcs
             cost += lCost
             CL.remove(nlc)
@@ -165,22 +226,28 @@ def getBestLaneCS(permCars, os, lane):
             for op in os:
                 s += str(op.position) + " "
             #print s
-           # print 'os full'
+            #print 'os full'
             break
-
+        #print ''
+    CS.sort(key = lambda pair: pair[1].position[0])
     #print "lenCS: " + str(len(CS)) + " cost: " + str(cost)
     #printCS(CS)
     #print ''
-    return CS, cost
+    return CS, costCSTotal(CS)
 
 def costShift(CS, newCar, op, os, lane):
-    nCS = CS
+    #print 'CS coming into costShift'
+    #printCS(CS)
+    nCS = copy.copy(CS)
     right = left = False
     #first car - no blocking
     if not nCS or not nCS[0]:
-        #print 'not CS'
+        print 'not CS'
         nCS.append( (newCar, op))
         return (nCS, costCS( (newCar, op) ))
+   # print 'os bounds: ' + str(os[0].position) + " : " + str(os[len(os)-1].position)
+   # print 'op: ' + str(op.position)
+   # print 'car: ' + str(newCar)
 
     #car from the right
     if newCar.position[0] > op.position[0]:
@@ -194,42 +261,53 @@ def costShift(CS, newCar, op, os, lane):
     currPos = nCS[-1][1].position[0] #[0] -> first pair , [1] opening of it
     if currPos < op.position[0] and right:
         nCS.append( (newCar, op))
-        #print 'right not blocked' + " " + str(currPos) + " " + str(op.position[0])
+    #    print 'right not blocked' + " " + str(currPos) + " " + str(op.position[0])
         return (nCS, costCS(nCS[-1]))
     elif currPos > op.position[0] and left:
         nCS.append( (newCar, op))
-        #print 'left not blocked' + " " + str(currPos) + " " + str(op.position[0])
+     #   print 'left not blocked' + " " + str(currPos) + " " + str(op.position[0])
         return (nCS, costCS(nCS[-1]))
 
     #check all the cars currently changing for placements
     elif right:
-        #print 'rightShift'
+      #  print 'rightShift'
         rOp = getNearestOpening(nCS, os, left)
         if not rOp:
-            #print 'noOp'
+       #     print 'noOp'
             return(nCS, 0)
-        shiftingCars = [pair for pair in nCS if pair[1].position[0] > rOp.position[0]]
-        notShiftingCars = [pair for pair in nCS if not (pair[1].position[0] > rOp.position[0]) ]
-        #print "1111 len ncs/shift/nShift: "
-        #print str(len(nCS)) + " : " + str(len(shiftingCars)) + " : " + str(len(notShiftingCars))
+        shiftingCars = [pair for pair in nCS if pair[1].position[0] >= rOp.position[0]]
+        notShiftingCars = [pair for pair in nCS if not (pair[1].position[0] >= rOp.position[0]) ]
         (shiftedCS, cost) = posShift(shiftingCars, newCar, op, lane)
+        if not cost:
+            return (CS, False)
+       # print 'shifting cars:'
+       # printCS(shiftingCars)
+       # print 'not-shifting cars:'
+       # printCS(notShiftingCars)
+       # print 'shifted-cs :'
+       # printCS(shiftedCS)
         nCS = notShiftingCars + shiftedCS
         nCS.append( (newCar, op))
+        #print 'nCS at end of right shift'
+        #printCS(nCS)
         return (nCS, cost)
 
     elif left:
         #print 'leftShift'
         lOp = getNearestOpening(nCS, os, left)
         if not lOp:
-          #  print 'noOp'
+         #   print 'noOp'
             return(nCS, 0)
-        shiftingCars = [pair for pair in nCS if pair[1].position[0] < lOp.position[0]]
-        notShiftingCars = [pair for pair in nCS if not (pair[1].position[0] < lOp.position[0]) ]
-       # print "1111 len ncs/shift/nShift: "
-       # print str(len(nCS)) + " : " + str(len(shiftingCars)) + " : " + str(len(notShiftingCars))
+        shiftingCars = [pair for pair in nCS if pair[1].position[0] <= lOp.position[0]]
+        notShiftingCars = [pair for pair in nCS if not (pair[1].position[0] <= lOp.position[0]) ]
+        #print "1111 len ncs/shift/nShift: "
+        #print str(len(nCS)) + " : " + str(len(shiftingCars)) + " : " + str(len(notShiftingCars))
         (shiftedCS, cost) = posShift(shiftingCars, newCar, op, lane)
+        if not cost:
+            return (CS, False)
         nCS = shiftedCS + notShiftingCars
         nCS.insert( 0, (newCar, op))
+        #printCS(nCS)
         return (nCS, cost)
 
    # print '-1'
@@ -267,38 +345,47 @@ def getNearestOpening(CS, os, left):
         return
 
 def posShift(CS, newCar, op, lane):
+    #print 'CS pre-posShift'
+    #printCS(CS)
     ncs = []
     cost = 0
     #from the left
     if newCar.position[0] < op.position[0]:
+      #  print 'cars shifting to the right'
         shift = 1
     else:
+     #   print 'cars shifting to the left'
         shift = -1
     for cs in CS:
         newCell = lane.getCellByX(cs[1].position[0]+shift)
+        if not newCell:
+            return (CS, False)
         ncs.append( ( cs[0], newCell ) )
         if ncs[len(ncs)-1]:
             cost += costCS( ncs[len(ncs)-1] )
+    #print 'CS post-posShift'
+    #printCS(ncs)
     return (ncs, cost)
 
 ##########################Get Cars utilities  ########################################
 def doEpsilonPass(tempCars, os):
-    CR = [car for car in tempCars if car.position[0] <= os[len(os)-1].position[0] + params.maxEpsilonLook
-                    and car.targetLane == os[0].position[1]                
+    CR = [car for car in tempCars if car.position[0] < os[len(os)-1].position[0] + params.maxEpsilonLook
                     and car.position[0] > os[len(os)-1].position[0] ]
 
-    CL = [car for car in tempCars if car.position[0] >= os[0].position[0] - params.maxEpsilonLook
-                                and car.targetLane == os[0].position[1]                
+    CL = [car for car in tempCars if car.position[0] > os[0].position[0] - params.maxEpsilonLook
                                 and car.position[0] < os[0].position[0] ]
     
     return (CR, CL)
 
-def doZPass(CR, CL, z):
+def doZPass(CR, CL, z, os):
     
     if(len(CR) > z):
         CR = CR[0:z]
     if(len(CL) > z):
         CL = CL[len(CL) - z : len(CL)]
+
+    CR = [car for car in CR if car.targetLane == os[0].position[1]]
+    CL = [car for car in CL if car.targetLane == os[0].position[1]]
     return (CR, CL)
 
 #pg 108
@@ -342,10 +429,13 @@ def costCS((car, op)):
     return car.priority * abs((car.accel - ( d_v / t )) ** 2)
 
 def costCSTotal(cs):
-    for i, car in enumerate(cs[0]):
-        car.accel = generateAccel(car, cs[1][i])
+    if cs:
+        for pair in cs:
+            pair[0].accel = generateAccel(pair[0], pair[1])
 
-    return sum([costCar(car, cs[1][i]) for i, car in enumerate(cs[0])])
+        return sum([costCS(pair) for pair in cs])
+    else:
+        return 1000000
 
 #pg 136
 def generateAccel(car, op):
