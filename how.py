@@ -1,6 +1,58 @@
 from params import params
 import copy 
 
+#4-16-15 changes to how
+# newHow 
+def How(road):
+    maxCost = 10000000
+    ActiveLanes = makeActiveLanes(road)
+    if not ActiveLanes:
+        return
+    ActiveLanes.sort()
+    #print ActiveLanes
+    for lane in ActiveLanes:
+        OS = getOpeningSets(lane, road)
+        OS.sort(key = lambda os: os[0].position[0])
+        if OS[0][0].position[1] < params.numLanes-1:
+            upCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]+1]
+        else:
+            upCars = []
+        if OS[0][0].position[1] > 0:
+            downCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]-1]
+        else:
+            downCars = []
+        for os in OS:
+            (csUp, costUp) = getBestLaneCS(upCars, os, road.lanes[lane])#todo getCars + makeCS
+            (csDown, costDown) = getBestLaneCS(downCars, os, road.lanes[lane])
+            csUp = list(set(csUp))
+            csDown = list(set(csDown))
+            if len(csUp) == len(csDown):
+                if costUp < costDown and maxCost > costUp > 0 and csUp:
+                    realCars = getRealCars(upCars, csUp)
+                    removeCS(upCars, realCars)
+                    #print 'addFCS Up cuz costs: ' + str(costUp)
+                    #printCS(realCars)
+                    road.addFCS(realCars)
+                elif csDown:
+                    #print 'addFCS Down cuz costs' + str(costDown)
+                    realCars = getRealCars(downCars, csDown)
+                    removeCS(downCars, realCars)
+                    #printCS(realCars)
+                    road.addFCS(realCars)#todo don't add as platoon or only some
+            else:
+                if len(csUp) > len(csDown):
+                    realCars = getRealCars(upCars, csUp)
+                    #print 'addFCS Up due to length: ' + str(len(csUp))
+                    removeCS(upCars, realCars)
+                    #printCS(realCars)
+                    road.addFCS(realCars)
+                else:
+                    realCars = getRealCars(downCars, csDown)
+                    #print 'addFCS Down due to length: ' + str(len(csDown))
+                    removeCS(downCars, realCars)
+                    #printCS(realCars)
+                    road.addFCS(realCars)#todo don't add as platoon or only some
+
 #get OSs for a lane
 def getOpeningSets(lane, road):
     OS = []
@@ -21,10 +73,12 @@ def removeCars(tempCars, cars):
         tempCars.remove(car)
 
 def removeCS(tempCars, cs):
+    usedOps = []
     for pair in cs:
-        if pair[0] in tempCars:
+        if pair[0] in tempCars and pair[1] not in usedOps:
             tempCars.remove(pair[0])
-        else:
+            usedOps.append(pair[1])
+        elif pair[0].accel < params.maxDecel or pair[0].accel > params.maxAccel or pair[1] in usedOps:
             cs.remove(pair)
 def makeActiveLanes(road):
     ActiveLanes = []
@@ -43,51 +97,6 @@ def printCS(cs):
     print cars
     print ops
 
-#4-16-15 changes to how
-# newHow 
-def How(road):
-    maxCost = 10000000
-    ActiveLanes = makeActiveLanes(road)
-    if not ActiveLanes:
-        return
-    ActiveLanes.sort()
-    #print ActiveLanes
-    for lane in ActiveLanes:
-        OS = getOpeningSets(lane, road)
-        OS.sort(key = lambda os: os[0].position[0])
-        upCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]+1]
-        downCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]-1]
-        for os in OS:
-            (csUp, costUp) = getBestLaneCS(upCars, os, road.lanes[lane])#todo getCars + makeCS
-            (csDown, costDown) = getBestLaneCS(downCars, os, road.lanes[lane])
-            csUp = list(set(csUp))
-            csDown = list(set(csDown))
-            if len(csUp) == len(csDown):
-                if costUp < costDown and maxCost > costUp > 0 and csUp:
-                    realCars = getRealCars(upCars, csUp)
-                    removeCS(upCars, realCars)
-                    print 'addFCS Up cuz costs: ' + str(costUp)
-                    printCS(realCars)
-                    road.addFCS(realCars)
-                elif csDown:
-                    print 'addFCS Down cuz costs' + str(costDown)
-                    realCars = getRealCars(downCars, csDown)
-                    removeCS(downCars, realCars)
-                    printCS(realCars)
-                    road.addFCS(realCars)#todo don't add as platoon or only some
-            else:
-                if len(csUp) > len(csDown):
-                    realCars = getRealCars(upCars, csUp)
-                    print 'addFCS Up due to length: ' + str(len(csUp))
-                    removeCS(upCars, realCars)
-                    printCS(realCars)
-                    road.addFCS(realCars)
-                else:
-                    realCars = getRealCars(downCars, csDown)
-                    print 'addFCS Down due to length: ' + str(len(csDown))
-                    removeCS(downCars, realCars)
-                    printCS(realCars)
-                    road.addFCS(realCars)#todo don't add as platoon or only some
 
 def getRealCars(real, fake):
     realCS = []
@@ -132,20 +141,20 @@ def getBestLaneCS(permCars, os, lane):
     CL = list(set(CL))
     
     if CR or CL:
-        print 'os / CR / CL'
+        #print 'os / CR / CL'
         s=""
         for op in os:
             s += str(op.position) + " "
-        print s
+        #print s
         s=""
         for car in CR:
             s += str(car.position) + " "
-        print s
+        #print s
         s=""
         for car in CL:
             s += str(car.position) + " "
-        print s
-        print ''
+        #print s
+        #print ''
 
     bound = 0
     while (CR or CL) and len(CS) < len(os) and bound < len(cars) :
@@ -242,7 +251,7 @@ def costShift(CS, newCar, op, os, lane):
     right = left = False
     #first car - no blocking
     if not nCS or not nCS[0]:
-        print 'not CS'
+        #print 'not CS'
         nCS.append( (newCar, op))
         return (nCS, costCS( (newCar, op) ))
    # print 'os bounds: ' + str(os[0].position) + " : " + str(os[len(os)-1].position)
@@ -413,26 +422,14 @@ def doEBPass(fR, fL, os):
 
 
 ##########################Costs #################################
-#Not the most foolproof getBestCS, so if it breaks don't be surprised :)
-#def getBestCS(CS):
-#    cutCS = [cs for cs in CS if cs != ([],[])]
-#    csCosts = [costCS(cs) for cs in cutCS]
-#    minCosts = [cs for i, cs in enumerate(cutCS) if csCosts[i] == min(csCosts)]
-#    if minCosts:
-#        return minCosts[0]
-#    else:
-#        return 
 def costCS((car, op)):
-    car.accel = generateAccel(car, op)
-    t = params.turnTime ** 2 
-    d_v = params.deltaVel
-    return car.priority * abs((car.accel - ( d_v / t )) ** 2)
+    if car.accel == 0:
+        car.accel = generateAccel(car, op)
+    neededAccel = (params.laneVels[op.position[1]] - params.laneVels[car.position[1]]) / params.turnTime
+    return abs(neededAccel - car.accel) ** 2
 
 def costCSTotal(cs):
     if cs:
-        for pair in cs:
-            pair[0].accel = generateAccel(pair[0], pair[1])
-
         return sum([costCS(pair) for pair in cs])
     else:
         return 1000000
@@ -445,8 +442,6 @@ def generateAccel(car, op):
     t = params.turnTime
     x_d = x_f - x_0
     accel = 2 * (x_d - v_d * t) / (t**2)
-    if accel > params.maxAccel or accel < params.maxDecel:
-        print "accel -- " + str(accel) 
     return accel
 
 def removeUniques(seq):

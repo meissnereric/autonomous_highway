@@ -1,6 +1,8 @@
 from math import pi
+
+#1600 meters in a mile
 class RoadParameters:
-    cellLength = 6 #in meters
+    cellLength = 5 #in meters
     initLaneLength = 10 #in cells
     deltaVel = 2.5 #m/s
     maxDeltaVel = 5 #m/s
@@ -13,17 +15,19 @@ class RoadParameters:
     maxFlowPerLane = [2400 * (  vel / 32.5) for vel in laneVels]  #cars / hour / lane - Empirical Data - pg 120
     maxFlow = sum(maxFlowPerLane) / 3600
     flowParam = 1
-    rAlpha = 2
+    rAlpha = 1
     #flow = maxFlow * flowParam #parameter to alter
-    flow = 5 #cars/second?
+    flow = 3 #cars/second?
     #exits = [15,50,100,150, 200]
-    exits = [265, 530, 800, 1050, 1350]#in cells
+    mile = 1600 #meters
+    exits = [int (float(i * mile) / float(cellLength)) for i in range(1,5)]#in cells
     maxLaneLength = exits[-1] #in cells
-    entrances = [exit - 25 for exit in exits]#in cells
+    entrances = [int(exit - float(mile * 0.25)/float(cellLength)) for exit in exits]#in cells
     percentContinuing = 0.9 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
-
+    staticUpEpsilon = mile * 0.5
+    staticDownEpsilon = mile * 0.5
     def getPercentContinuing():
         return percentContinuing
 
@@ -58,18 +62,32 @@ def getTurnTime(vel):
 params = RoadParameters()
 
 class Statistics:
-    lcCosts = []
-    numMissedCars = []
-    numMadeCars = []
-    carsRequestingLC = []
-    carsInCS = []
-    carsMakingLC = []
     
+    def __init__(self):
+        self.numMissedCars = []
+        self.numMadeCars = []
+        self.carsRequestingLC = []
+        self.carsInCS = []
+        self.carsMakingLC = []
+        self.carsDoLC = []
+        self.costPerLaneChange = []
+        self.turnTime = []
+        self.statsPerSim = []
+        self.params = 0
     def newTurn(self, dt):
         self.numMissedCars.append(0)
         self.numMadeCars.append(0)
         self.carsRequestingLC.append(0)
         self.carsInCS.append(0)
         self.carsMakingLC.append(0)
+        self.carsDoLC.append(0)
+        stats.costPerLaneChange.append(0)
+        stats.turnTime.append(0)
+
+def newSimulation():
+   global stats
+   globalStats.append(stats)
+   stats = Statistics()
 
 stats = Statistics()
+globalStats = []

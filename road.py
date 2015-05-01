@@ -2,6 +2,7 @@ from math import floor
 from random import randint
 from params import params, stats
 import when
+import how
 CL = params.cellLength
 class Road:
     
@@ -12,6 +13,8 @@ class Road:
         self.lanes = []
         self.FCS = []
         self.clc = []
+        self.totalCost = []
+        self.totalCost.append(0)
         self.cars = []
         self.createLanes()
         self.turn = -1
@@ -40,19 +43,10 @@ class Road:
         self.removeExtraCells()
 
     def updateRoad(self, dt):
-        j=10
         self.turn += 1
-        print j
-        j += 1
         self.addNewCells(dt)
-        print j
-        j += 1
         self.addEnteringCars(dt)
-        print j
-        j += 1
         self.addContinuingCars(dt)
-        print j
-        j += 1
         self.cars.sort(key = lambda c: c.position[0])
 
     def updateExitingCars(self):
@@ -67,11 +61,15 @@ class Road:
         for car in self.cars:
             if car.position[0] > params.maxLaneLength:
                 if car.position[1] == 0:
-                    print 'oob car exit'
+                   # print 'oob car exit'
                     self.exitCar(car)
+                    if car in self.cars:
+                        self.cars.remove(car)
                 else:
-                    print 'oob car missed exit'
+                   # print 'oob car missed exit'
                     self.markMissedExit(car)
+                    if car in self.cars:
+                        self.cars.remove(car)
                 #todo update stats for deleted cars
 
     def exitCar(self, car):
@@ -79,21 +77,22 @@ class Road:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         self.cars.remove(car)
         stats.numMadeCars[self.turn] += 1
-        #print 'Car made its exit: ' + str(car.position) + " : " + str(car.exit)
+       # print 'Car made its exit: ' + str(car.position) + " : " + str(car.exit)
         
     def markMissedExit(self, car):
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         self.cars.remove(car)
         stats.numMissedCars[self.turn] += 1
-        print 'Car missed its exit: ' + str(car.position) + " : " + str(car.exit) + " : " + str(car.d_es) 
-        print "Car's target lane / priority: " + str(car.targetLane) + " : " + str(car.priority)
-        print car
+        #print 'Car missed its exit: ' + str(car.position) + " : " + str(car.exit) + " : " + str(car.d_es) 
+        #print "Car's target lane / priority: " + str(car.targetLane) + " : " + str(car.priority)
+       # print car
 
     #Tested
     def updateLCs(self):
+        self.madeLC = 0
         for lc in self.clc:
-            #print "lc car : op " + str(lc[0].position) + " : " + str(lc[1].position)
+           # print "lc car : op " + str(lc[0].position) + " : " + str(lc[1].position)
             self.laneChange( (lc[0], lc[1]) )
 
     def addNewCells(self, dt):
@@ -117,7 +116,7 @@ class Road:
                 lane.cells = lane.cells[0 : params.maxLaneLength - 1]
 
     def addContinuingCars(self, dt):
-        numNewCars = int(dt * params.percentContinuing * params.flow)
+        numNewCars = int(dt * params.percentContinuing * params.flow * params.numLanes)
         print numNewCars
         for i in range(numNewCars):
             exit = randint(0,len(params.exits)-1)
@@ -125,19 +124,22 @@ class Road:
             cell = randint(0, self.newCells[lane]-1)
             j = 0
             while not self.addToCell(Car(cell, lane, params.exits[exit]), self.lanes[lane]) and j < numNewCars * 3:
+                exit = randint(0,len(params.exits)-1)
                 cell = randint(0, self.newCells[lane]-1)
                 lane = self.getLane(exit,cell)
                 j += 1
 
     
     def addEnteringCars(self, dt):
-        numNewCars = int(dt * (1 - params.percentContinuing) * params.flow)
+        numNewCars = int(dt * (1 - params.percentContinuing) * params.flow * params.numLanes)
         for i in range(numNewCars):
             entrance = randint(0, len(params.entrances)-1)
             exit = randint(entrance, len(params.exits)-1)
             cell = self.getCellForEntering(entrance, dt)
             i = 0
-            while not self.addToCell(Car(cell.position[0], 0, params.exits[exit]), self.lanes[0]) and i < 100:
+            while not self.addToCell(Car(cell.position[0], 0, params.exits[exit]), self.lanes[0]) and i < numNewCars * 3:
+                entrance = randint(0, len(params.entrances)-1)
+                exit = randint(entrance, len(params.exits)-1)
                 cell = self.getCellForEntering(entrance,dt)
                 i += 1
     def clearCarData(self):
@@ -174,7 +176,7 @@ class Road:
             d_es = sum( when.getEpsilons( Car(cell, y, params.exits[exit]), self))
             if params.exits[exit] * CL - d_es > cell*CL:
                 return y
-        print 'never caught'
+        #print 'never assinged a lane'
         return 0
     
     def addToCell(self, car, lane):
@@ -207,9 +209,11 @@ class Road:
             print 'epsilon error. LC too far'
             print car.position
             print cell.position
+            return
         if cell.filled:
             print "Lane changing into a filled cell you fool! "+ " " + str(car.position) + str(cell.position)
             return
+        self.madeLC += 1
         if len(self.lanes[car.position[1]].cells) > car.position[0]:
             self.lanes[car.position[1]].cells[car.position[0]].filled = False
         car.position = (cell.position)
@@ -222,6 +226,16 @@ class Road:
         for pair in fcs:
             if pair:
                 self.FCS.append( pair )
+
+    def computeCost(self):
+        self.totalCost.append(0)
+        for fcs in self.clc:
+            cost = how.costCS(fcs)
+            if cost < (params.maxDecel **2) or cost < (params.maxAccel ** 2):
+                self.totalCost[self.turn] += cost
+            else:
+                print ' cost >= maxCost => fcs was empty.'
+                print cost
 ############### End Road class ##############
 
 class Cell:
