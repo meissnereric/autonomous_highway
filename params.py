@@ -15,19 +15,19 @@ class RoadParameters:
     maxFlowPerLane = [2400 * (  vel / 32.5) for vel in laneVels]  #cars / hour / lane - Empirical Data - pg 120
     maxFlow = sum(maxFlowPerLane) / 3600
     flowParam = 1
-    rAlpha = 1
+    rAlpha = 1.5
     #flow = maxFlow * flowParam #parameter to alter
     flow = 3 #cars/second?
     #exits = [15,50,100,150, 200]
     mile = 1600 #meters
-    exits = [int (float(i * mile) / float(cellLength)) for i in range(1,5)]#in cells
+    exits = [int (float(i * mile * 0.25) / float(cellLength)) for i in range(1,8)]#in cells
     maxLaneLength = exits[-1] #in cells
     entrances = [int(exit - float(mile * 0.25)/float(cellLength)) for exit in exits]#in cells
     percentContinuing = 0.9 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
-    staticUpEpsilon = mile * 0.5
-    staticDownEpsilon = mile * 0.5
+    staticUpEpsilon = mile * 0.75
+    staticDownEpsilon = mile * 0.75
     def getPercentContinuing():
         return percentContinuing
 
@@ -83,11 +83,49 @@ class Statistics:
         self.carsDoLC.append(0)
         stats.costPerLaneChange.append(0)
         stats.turnTime.append(0)
+    def addAverages(self, stats):
+        self.numMissedCars.append(average(stats.numMissedCars))
+        self.numMadeCars.append(average(stats.numMadeCars))
+        self.carsRequestingLC.append(average(stats.carsRequestingLC))
+        self.carsInCS.append(average(stats.carsInCS))
+        self.carsMakingLC.append(average(stats.carsMakingLC))
+        self.carsDoLC.append(average(stats.carsDoLC))
+        self.turnTime.append(average(stats.turnTime))
+        self.costPerLaneChange.append(average(stats.costPerLaneChange))
+    def reset(self):
+        self.numMissedCars = []
+        self.numMadeCars = []
+        self.carsRequestingLC = []
+        self.carsInCS = []
+        self.carsMakingLC = []
+        self.carsDoLC = []
+        self.costPerLaneChange = []
+        self.turnTime = []
+        self.statsPerSim = []
+        self.params = 0
 
-def newSimulation():
-   global stats
-   globalStats.append(stats)
-   stats = Statistics()
+def printStats(stats):
+    print 'numMissedCars'
+    print stats.numMissedCars
+    print ''
+    print 'numMadeCars'
+    print stats.numMadeCars
+    print ''
+    print 'cost per lane change'
+    print stats.costPerLaneChange
+    print ''
+    print 'turnTime'
+    print stats.turnTime
+    print ''
+
+def average(bigLst):
+    if bigLst:
+        goodData = len(bigLst) / 2
+        lst = bigLst[-1 * goodData:] #only take the last half of the data. Because the road has to warm up always
+        return float(sum(lst))/ float(len(lst))
+    else:
+        return 0.0
+
+    
 
 stats = Statistics()
-globalStats = []

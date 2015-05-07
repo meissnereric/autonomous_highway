@@ -3,6 +3,7 @@ import how
 import do
 import when
 import baseHow
+import pickle
 from time import time
 from params import *
 
@@ -30,14 +31,14 @@ def tests(myRoad):
     myRoad.updateLCs()
     stats.carsMakingLC[myRoad.turn] = myRoad.madeLC
     myRoad.cleanRoad()
-    print "Cars requesting LC: " + str(stats.carsRequestingLC[myRoad.turn]) #after when
-    print "Cars in how CS: " + str(stats.carsInCS[myRoad.turn]) #after how
-    print "Cars making do LC: " + str(stats.carsDoLC[myRoad.turn]) #after do
-    print "Cost per lane change: " + str(stats.costPerLaneChange[myRoad.turn])
-    print "Cars really making LC: " + str(stats.carsMakingLC[myRoad.turn]) #after do
-    print "Cars missed exit: " + str(stats.numMissedCars[myRoad.turn])
-    print "Cars made exit: " + str(stats.numMadeCars[myRoad.turn])
-    print "Cars on road: " + str(len(myRoad.cars))
+   # print "Cars requesting LC: " + str(stats.carsRequestingLC[myRoad.turn]) #after when
+   # print "Cars in how CS: " + str(stats.carsInCS[myRoad.turn]) #after how
+   # print "Cars making do LC: " + str(stats.carsDoLC[myRoad.turn]) #after do
+   # print "Cost per lane change: " + str(stats.costPerLaneChange[myRoad.turn])
+   # print "Cars really making LC: " + str(stats.carsMakingLC[myRoad.turn]) #after do
+   # print "Cars missed exit: " + str(stats.numMissedCars[myRoad.turn])
+   # print "Cars made exit: " + str(stats.numMadeCars[myRoad.turn])
+   # print "Cars on road: " + str(len(myRoad.cars))
 
 def baseCaseTests(myRoad):
     myRoad.baseCase = True
@@ -60,14 +61,14 @@ def baseCaseTests(myRoad):
     myRoad.updateLCs()
     stats.carsMakingLC[myRoad.turn] = myRoad.madeLC
     myRoad.cleanRoad()
-    print "Cars requesting LC: " + str(stats.carsRequestingLC[myRoad.turn]) #after when
-    print "Cars in how CS: " + str(stats.carsInCS[myRoad.turn]) #after how
-    print "Cars making do LC: " + str(stats.carsDoLC[myRoad.turn]) #after do
-    print "Cost per lane change: " + str(stats.costPerLaneChange[myRoad.turn])
-    print "Cars really making LC: " + str(stats.carsMakingLC[myRoad.turn]) #after do
-    print "Cars missed exit: " + str(stats.numMissedCars[myRoad.turn])
-    print "Cars made exit: " + str(stats.numMadeCars[myRoad.turn])
-    print "Cars on road: " + str(len(myRoad.cars))
+   # print "Cars requesting LC: " + str(stats.carsRequestingLC[myRoad.turn]) #after when
+   # print "Cars in how CS: " + str(stats.carsInCS[myRoad.turn]) #after how
+   # print "Cars making do LC: " + str(stats.carsDoLC[myRoad.turn]) #after do
+   # print "Cost per lane change: " + str(stats.costPerLaneChange[myRoad.turn])
+   # print "Cars really making LC: " + str(stats.carsMakingLC[myRoad.turn]) #after do
+   # print "Cars missed exit: " + str(stats.numMissedCars[myRoad.turn])
+   # print "Cars made exit: " + str(stats.numMadeCars[myRoad.turn])
+   # print "Cars on road: " + str(len(myRoad.cars))
 
 def viewCar(car):
     print car
@@ -119,17 +120,32 @@ def timeSim(f ,numIters):
         print str(turn) + " : " + str(totalTime)
         print ''
 
-def average(lst):
-    if lst:
-        return sum(lst)/ len(lst)
-    else:
-        return 0
 myRoad = road.Road()
 
+def runBoth(numIters):
+    runSims(tests, numIters)
+    runSims(baseCaseTests, numIters)
+
 def runSims(f, numIters):
-    global params
-    for flow in [1,2,3]:
+    global myRoad
+    simStats = Statistics()
+    for flow in [0.5, 1,2,3,4,5,6,7]:
+        print 'flow: ' + str(flow)
+        stats.reset()
         myRoad = road.Road()
+        print myRoad.turn
         params.flow = flow
         timeSim(f, numIters)
-        newSimulation()
+        simStats.addAverages(stats)
+    fileName = str(f.__name__)+ "_flow_0_7_near_data.p"
+    writeToFile(fileName, simStats)
+    return simStats
+
+def writeToFile( fileName, stats):
+    with open(fileName, "wb") as f:
+        pickle.dump(stats, f)
+    with open(fileName, "rb") as f:
+        print pickle.load(f)
+def readFromFile( fileName):
+    with open(fileName, "rb") as f:
+        return pickle.load(f)

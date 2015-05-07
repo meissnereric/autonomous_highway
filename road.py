@@ -117,7 +117,6 @@ class Road:
 
     def addContinuingCars(self, dt):
         numNewCars = int(dt * params.percentContinuing * params.flow * params.numLanes)
-        print numNewCars
         for i in range(numNewCars):
             exit = randint(0,len(params.exits)-1)
             lane = self.getLane(exit)
@@ -182,7 +181,8 @@ class Road:
     def addToCell(self, car, lane):
  #       print car.position
 #        print len(lane.cells)
-        if not (lane.cells[ car.position[0] ].filled):
+        
+        if len(lane.cells) > car.position[0] and not (lane.cells[ car.position[0] ].filled):
             lane.cells[car.position[0]].filled = True
             self.cars.append(car)
             return True
@@ -206,12 +206,12 @@ class Road:
         car = LC[0]
         cell = LC[1]
         if abs(car.position[0] - cell.position[0]) > params.maxEpsilonLook:
-            print 'epsilon error. LC too far'
-            print car.position
-            print cell.position
+           # print 'epsilon error. LC too far'
+           # print car.position
+           # print cell.position
             return
         if cell.filled:
-            print "Lane changing into a filled cell you fool! "+ " " + str(car.position) + str(cell.position)
+           # print "Lane changing into a filled cell you fool! "+ " " + str(car.position) + str(cell.position)
             return
         self.madeLC += 1
         if len(self.lanes[car.position[1]].cells) > car.position[0]:

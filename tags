@@ -1,0 +1,120 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CL	road.py	/^CL = params.cellLength$/;"	v
+Car	road.py	/^class Car:$/;"	c
+Cell	road.py	/^class Cell:$/;"	c
+How	how.py	/^def How(road):$/;"	f
+Lane	road.py	/^class Lane:$/;"	c
+Platoon	road.py	/^class Platoon:$/;"	c
+Road	road.py	/^class Road:$/;"	c
+RoadParameters	params.py	/^class RoadParameters:$/;"	c
+Statistics	params.py	/^class Statistics:$/;"	c
+When	when.py	/^def When(road):$/;"	f
+__init__	road.py	/^    def __init__(self):$/;"	m	class:Road
+__init__	road.py	/^    def __init__(self, cars):$/;"	m	class:Platoon
+__init__	road.py	/^    def __init__(self, cell, lane, exit):$/;"	m	class:Car
+__init__	road.py	/^    def __init__(self, index, lane):$/;"	m	class:Cell
+__init__	road.py	/^    def __init__(self, velocity):$/;"	m	class:Lane
+addContinuingCars	road.py	/^    def addContinuingCars(self, dt):$/;"	m	class:Road
+addEnteringCars	road.py	/^    def addEnteringCars(self, dt):$/;"	m	class:Road
+addFCS	road.py	/^    def addFCS(self, fcs):$/;"	m	class:Road
+addNewCells	road.py	/^    def addNewCells(self, dt):$/;"	m	class:Road
+addToCell	road.py	/^    def addToCell(self, car, lane):$/;"	m	class:Road
+baseCaseDo	do.py	/^def baseCaseDo(PS): #[ (Platoon, op[] ) ]$/;"	f
+baseCaseHow	baseHow.py	/^def baseCaseHow(road):$/;"	f
+baseCaseInConflict	do.py	/^def baseCaseInConflict(pls, v):$/;"	f
+baseCaseTests	tests.py	/^def baseCaseTests(myRoad):$/;"	f
+baseCaseWhen	when.py	/^def baseCaseWhen(cars):$/;"	f
+baseVel	params.py	/^    baseVel = 25 #m\/s$/;"	v	class:RoadParameters
+carsDoLC	params.py	/^    carsDoLC = []$/;"	v	class:Statistics
+carsInCS	params.py	/^    carsInCS = []$/;"	v	class:Statistics
+carsMakingLC	params.py	/^    carsMakingLC = []$/;"	v	class:Statistics
+carsRequestingLC	params.py	/^    carsRequestingLC = []$/;"	v	class:Statistics
+cellLength	params.py	/^    cellLength = 5 #in meters$/;"	v	class:RoadParameters
+cleanRoad	road.py	/^    def cleanRoad(self):$/;"	m	class:Road
+clearCarData	road.py	/^    def clearCarData(self):$/;"	m	class:Road
+costCS	how.py	/^def costCS((car, op)):$/;"	f
+costCSTotal	how.py	/^def costCSTotal(cs):$/;"	f
+costShift	how.py	/^def costShift(CS, newCar, op, os, lane):$/;"	f
+createLanes	road.py	/^    def createLanes(self):        $/;"	m	class:Road
+deltaVel	params.py	/^    deltaVel = 2.5 #m\/s$/;"	v	class:RoadParameters
+do	do.py	/^def do(PS): #[ (Platoon, op[] ) ]$/;"	f
+doEBPass	how.py	/^def doEBPass(fR, fL, os):$/;"	f
+doEpsilonPass	how.py	/^def doEpsilonPass(tempCars, os):$/;"	f
+doZPass	how.py	/^def doZPass(CR, CL, z, os):$/;"	f
+entrances	params.py	/^    entrances = [int(exit - float(mile * 0.25)\/float(cellLength)) for exit in exits]#in cells$/;"	v	class:RoadParameters
+exitCar	road.py	/^    def exitCar(self, car):$/;"	m	class:Road
+exits	params.py	/^    exits = [int (float(i * mile) \/ float(cellLength)) for i in range(1,5)]#in cells$/;"	v	class:RoadParameters
+flow	params.py	/^    flow = 3 #cars\/second?$/;"	v	class:RoadParameters
+flowParam	params.py	/^    flowParam = 1$/;"	v	class:RoadParameters
+generateAccel	how.py	/^def generateAccel(car, op):$/;"	f
+getBaseEpsilons	when.py	/^def getBaseEpsilons(car):$/;"	f
+getBestLaneCS	how.py	/^def getBestLaneCS(permCars, os, lane):$/;"	f
+getCellByX	road.py	/^    def getCellByX(self, x):$/;"	m	class:Lane
+getCellForEntering	road.py	/^    def getCellForEntering(self, entrance, dt):$/;"	m	class:Road
+getEpsilons	when.py	/^def getEpsilons(car, road):$/;"	f
+getExit	road.py	/^    def getExit(self, cell, lane):$/;"	m	class:Road
+getLane	road.py	/^    def getLane(self, exit, cell = 0):$/;"	m	class:Road
+getNearestOpening	baseHow.py	/^def getNearestOpening(car, OS, lane):$/;"	f
+getNearestOpening	how.py	/^def getNearestOpening(CS, os, left):$/;"	f
+getOpeningSets	baseHow.py	/^def getOpeningSets(road):$/;"	f
+getOpeningSets	how.py	/^def getOpeningSets(lane, road):$/;"	f
+getPercentContinuing	params.py	/^    def getPercentContinuing():$/;"	m	class:RoadParameters
+getPercentEntering	params.py	/^    def getPercentEntering():$/;"	m	class:RoadParameters
+getR	when.py	/^def getR( road):$/;"	f
+getRealCars	how.py	/^def getRealCars(real, fake):$/;"	f
+getTurnTime	params.py	/^def getTurnTime(vel):$/;"	f
+id	road.py	/^    id = -1$/;"	v	class:Car
+id	road.py	/^    id = -1$/;"	v	class:Cell
+inConflict	do.py	/^def inConflict(pls, v):$/;"	f
+initLaneLength	params.py	/^    initLaneLength = 10 #in cells$/;"	v	class:RoadParameters
+laneChange	road.py	/^    def laneChange(self, LC ):$/;"	m	class:Road
+laneVels	params.py	/^    laneVels = [lane * deltaVel + baseVel for lane in range(numLanes)]$/;"	v	class:RoadParameters
+lcCosts	params.py	/^    lcCosts = []$/;"	v	class:Statistics
+lenCarsInLane	tests.py	/^def lenCarsInLane(l, cars):$/;"	f
+makeActiveLanes	baseHow.py	/^def makeActiveLanes(road):$/;"	f
+makeActiveLanes	how.py	/^def makeActiveLanes(road):$/;"	f
+markMissedExit	road.py	/^    def markMissedExit(self, car):$/;"	m	class:Road
+maxAccel	params.py	/^    maxAccel = 2.8 #m\/s^2$/;"	v	class:RoadParameters
+maxCarsPerHourPerLane	params.py	/^    maxCarsPerHourPerLane =  2400 #cars \/ hour$/;"	v	class:RoadParameters
+maxDecel	params.py	/^    maxDecel = -3.0  #m\/s^2$/;"	v	class:RoadParameters
+maxDeltaVel	params.py	/^    maxDeltaVel = 5 #m\/s$/;"	v	class:RoadParameters
+maxEpsilonLook	params.py	/^    maxEpsilonLook = 10  #in cells$/;"	v	class:RoadParameters
+maxFlow	params.py	/^    maxFlow = sum(maxFlowPerLane) \/ 3600$/;"	v	class:RoadParameters
+maxFlowPerLane	params.py	/^    maxFlowPerLane = [2400 * (  vel \/ 32.5) for vel in laneVels]  #cars \/ hour \/ lane - Empirical Data - pg 120$/;"	v	class:RoadParameters
+maxLaneLength	params.py	/^    maxLaneLength = exits[-1] #in cells$/;"	v	class:RoadParameters
+mile	params.py	/^    mile = 1600 #meters$/;"	v	class:RoadParameters
+myRoad	tests.py	/^myRoad = road.Road()$/;"	v
+newTurn	params.py	/^    def newTurn(self, dt):$/;"	m	class:Statistics
+numLanes	params.py	/^    numLanes = 5$/;"	v	class:RoadParameters
+numMadeCars	params.py	/^    numMadeCars = []$/;"	v	class:Statistics
+numMissedCars	params.py	/^    numMissedCars = []$/;"	v	class:Statistics
+params	params.py	/^params = RoadParameters()$/;"	v
+percentContinuing	params.py	/^    percentContinuing = 0.9 #percentage of new cars on a road continuing$/;"	v	class:RoadParameters
+posShift	how.py	/^def posShift(CS, newCar, op, lane):$/;"	f
+printCS	how.py	/^def printCS(cs):$/;"	f
+printSameCellCars	tests.py	/^def printSameCellCars(myRoad):$/;"	f
+rAlpha	params.py	/^    rAlpha = 2$/;"	v	class:RoadParameters
+removeCS	how.py	/^def removeCS(tempCars, cs):$/;"	f
+removeCars	how.py	/^def removeCars(tempCars, cars):$/;"	f
+removeExtraCells	road.py	/^    def removeExtraCells(self):$/;"	m	class:Road
+removeOOBCars	road.py	/^    def removeOOBCars(self):$/;"	m	class:Road
+removeUniques	do.py	/^def removeUniques(seq):$/;"	f
+removeUniques	how.py	/^def removeUniques(seq):$/;"	f
+sortCars	tests.py	/^def sortCars(cars):$/;"	f
+staticDownEpsilon	params.py	/^    staticDownEpsilon = mile * 1$/;"	v	class:RoadParameters
+staticUpEpsilon	params.py	/^    staticUpEpsilon = mile * 1$/;"	v	class:RoadParameters
+stats	params.py	/^stats = Statistics()$/;"	v
+tests	tests.py	/^def tests(myRoad):$/;"	f
+timeSim	tests.py	/^def timeSim(f ,numIters):$/;"	f
+timer	tests.py	/^def timer(f, *args):$/;"	f
+turnTime	params.py	/^    turnTime = 10 #in seconds$/;"	v	class:RoadParameters
+updateExitingCars	road.py	/^    def updateExitingCars(self):$/;"	m	class:Road
+updateLCs	road.py	/^    def updateLCs(self):$/;"	m	class:Road
+updateRoad	road.py	/^    def updateRoad(self, dt):$/;"	m	class:Road
+viewCar	tests.py	/^def viewCar(car):$/;"	f
+viewCars	tests.py	/^def viewCars(road):$/;"	f

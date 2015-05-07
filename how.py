@@ -13,11 +13,12 @@ def How(road):
     for lane in ActiveLanes:
         OS = getOpeningSets(lane, road)
         OS.sort(key = lambda os: os[0].position[0])
-        if OS[0][0].position[1] < params.numLanes-1:
+        if OS and OS[0] and OS[0][0].position[1] < params.numLanes-1:
             upCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]+1]
         else:
             upCars = []
-        if OS[0][0].position[1] > 0:
+        if OS and OS[0] and OS[0][0].position[1] > 0:
+
             downCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]-1]
         else:
             downCars = []
