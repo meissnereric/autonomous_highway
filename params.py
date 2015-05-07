@@ -26,8 +26,8 @@ class RoadParameters:
     percentContinuing = 0.9 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
-    staticUpEpsilon = mile * 0.75
-    staticDownEpsilon = mile * 0.75
+    staticUpEpsilon = mile * 0.25 #meters
+    staticDownEpsilon = mile * 0.25 #meters
     def getPercentContinuing():
         return percentContinuing
 

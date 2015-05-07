@@ -110,12 +110,13 @@ def getRealCars(real, fake):
 
 def getBestLaneCS(permCars, os, lane):
     cars = copy.copy(permCars)
+    os.sort(key = lambda op: op.position[0])
     maxCost = 10000000
     if not cars:
         return ([], maxCost)
     CS = []
     cost = 0.0
-    blockCars = [car for car in cars if car.position[0] <= os[len(os)-1].position[0]
+    blockCars = [car for car in cars if car.position[0] <= os[-1].position[0]
                                         and car.position[0] >= os[0].position[0] ]
     Z = len(os) - len(blockCars)
     blockCars = [car for car in blockCars if car.targetLane == os[0].position[1]]
@@ -127,6 +128,9 @@ def getBestLaneCS(permCars, os, lane):
         CS.append(cs)
     
     removeCars(cars, blockCars)
+    for car in blockCars:
+        if car in cars:
+            print 'car from blockCars was not removed from cars'
     (CR, CL) = doEpsilonPass(cars, os)
     (CR,CL) = doEBPass(CR, CL, os)
     (CR, CL) = doZPass(CR, CL, Z, os)
@@ -140,6 +144,13 @@ def getBestLaneCS(permCars, os, lane):
     CL.sort(key = lambda c: c.position[0], reverse=True) #CL[0] is max X
     CR = list(set(CR))
     CL = list(set(CL))
+    for car in CR:
+        if car in CL:
+            print 'car is in both CR and CL' + str(car) + " " + str(car.position) + " targetLane: " + str(car.targetLane)
+            print "len os: " + str(len(os))
+            print "start/end: " + str(os[0].position) + " : " + str(os[-1].position)
+            if car in blockCars:
+                print 'also in blockCars'
     
     if CR or CL:
         #print 'os / CR / CL'
@@ -177,6 +188,8 @@ def getBestLaneCS(permCars, os, lane):
                 for cs in CS:
                     if nrc == cs[0]:
                         print 'force remove nrc'
+                        printCS(CS)
+                        print str(nrc) + " : " + str(nrc.position)
                         CR.remove(nrc)
                         raise Exception('nlc','remove')
                 op1 = os[0]
@@ -198,6 +211,8 @@ def getBestLaneCS(permCars, os, lane):
                 for cs in CS:
                     if nlc == cs[0]:
                         print 'force remove nlc'
+                        printCS(CS)
+                        print str(nlc) + " : " + str(nlc.position)
                         CL.remove(nlc)
                         raise Exception('nlc','remove')
                 op1 = os[0]
