@@ -137,7 +137,7 @@ def runSims(f, numIters):
         params.flow = flow
         timeSim(f, numIters)
         simStats.addAverages(stats)
-    fileName = str(f.__name__)+ "_flow_0_7_near_data.p"
+    fileName = str(f.__name__)+ "_flow_0_7_near_06cont_data.p"
     writeToFile(fileName, simStats)
     return simStats
 

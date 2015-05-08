@@ -127,7 +127,6 @@ class Road:
                 cell = randint(0, self.newCells[lane]-1)
                 lane = self.getLane(exit,cell)
                 j += 1
-
     
     def addEnteringCars(self, dt):
         numNewCars = int(dt * (1 - params.percentContinuing) * params.flow * params.numLanes)
