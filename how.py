@@ -442,7 +442,7 @@ def costCS((car, op)):
     if car.accel == 0:
         car.accel = generateAccel(car, op)
     neededAccel = (params.laneVels[op.position[1]] - params.laneVels[car.position[1]]) / params.turnTime
-    return abs(neededAccel - car.accel) ** 2
+    return abs(neededAccel - car.accel)
 
 def costCSTotal(cs):
     if cs:
