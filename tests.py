@@ -129,7 +129,7 @@ def runBoth(numIters):
 def runSims(f, numIters):
     global myRoad
     simStats = Statistics()
-    for flow in [0.5, 1,2,3,4,5,6,7]:
+    for flow in [x * 0.5 for x in range (1,15)]:
         print 'flow: ' + str(flow)
         stats.reset()
         myRoad = road.Road()
@@ -137,7 +137,7 @@ def runSims(f, numIters):
         params.flow = flow
         timeSim(f, numIters)
         simStats.addAverages(stats)
-    fileName = str(f.__name__)+ "_flow_0_7_near_06cont_data.p"
+    fileName = str(f.__name__)+ "_far_linearCost_data.p"
     writeToFile(fileName, simStats)
     return simStats
 

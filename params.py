@@ -20,9 +20,9 @@ class RoadParameters:
     flow = 3 #cars/second?
     #exits = [15,50,100,150, 200]
     mile = 1600 #meters
-    exits = [int (float(i * mile * 0.25) / float(cellLength)) for i in range(1,8)]#in cells
+    exits = [int (float(i * mile) / float(cellLength)) for i in range(1,8)]#in cells
     maxLaneLength = exits[-1] #in cells
-    entrances = [int(exit - float(mile * 0.25)/float(cellLength)) for exit in exits]#in cells
+    entrances = [int(exit - float(mile)/float(cellLength)) for exit in exits]#in cells
     percentContinuing = 0.9 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
