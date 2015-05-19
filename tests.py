@@ -8,13 +8,16 @@ from time import time
 from params import *
 
 
-def tests(myRoad):
+def noTime(myRoad):
     global stats
-    myRoad.baseCase = False
     params.turnTime = max([getTurnTime(vel) for vel in params.laneVels])
     stats.params = params
     stats.newTurn(params.turnTime)
     myRoad.updateRoad(params.turnTime)
+
+def tests(myRoad):
+    global stats
+    myRoad.baseCase = False
     when.When(myRoad)
     stats.carsRequestingLC[myRoad.turn] = len([car for car in myRoad.cars if car.position[1] != car.targetLane])
     how.How(myRoad)
@@ -41,10 +44,8 @@ def tests(myRoad):
    # print "Cars on road: " + str(len(myRoad.cars))
 
 def baseCaseTests(myRoad):
+    global stats
     myRoad.baseCase = True
-    stats.newTurn(params.turnTime)
-    stats.params = params
-    myRoad.updateRoad(params.turnTime)
     myRoad.cars = when.baseCaseWhen(myRoad.cars)
     stats.carsRequestingLC[myRoad.turn] = len([car for car in myRoad.cars if car.position[1] != car.targetLane])
     baseHow.baseCaseHow(myRoad)
@@ -109,11 +110,22 @@ def timer(f, *args):
     e = time()
     return e - s
 
+def oldTimeSim(f, numIters):
+    totalTime = 0
+    for i in range(numIters):
+        turn2 = timer(noTime, myRoad)
+        turn = timer(f, myRoad) + turn2
+        stats.turnTime[myRoad.turn] = turn
+        totalTime += turn
+        print str(turn) + " : " + str(totalTime)
+        print ''
+
 #maybe for final results have a "max road length" parameter to change and compare to find how well it scales. 
 #6km roads do X fast,  10km roads do X fast
 def timeSim(f ,numIters):
     totalTime = 0
     for i in range(numIters):
+        noTime(myRoad)
         turn = timer(f, myRoad)
         stats.turnTime[myRoad.turn] = turn
         totalTime += turn
@@ -129,7 +141,7 @@ def runBoth(numIters):
 def runSims(f, numIters):
     global myRoad
     simStats = Statistics()
-    for flow in [x * 0.5 for x in range (1,15)]:
+    for flow in [x * 0.5 for x in range (1,12)]:
         print 'flow: ' + str(flow)
         stats.reset()
         myRoad = road.Road()

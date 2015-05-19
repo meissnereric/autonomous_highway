@@ -119,14 +119,16 @@ class Road:
         numNewCars = int(dt * params.percentContinuing * params.flow * params.numLanes)
         for i in range(numNewCars):
             exit = randint(0,len(params.exits)-1)
-            lane = self.getLane(exit)
+            lane = randint(0, params.numLanes-1)
             cell = randint(0, self.newCells[lane]-1)
             j = 0
             while not self.addToCell(Car(cell, lane, params.exits[exit]), self.lanes[lane]) and j < numNewCars * 3:
                 exit = randint(0,len(params.exits)-1)
                 cell = randint(0, self.newCells[lane]-1)
-                lane = self.getLane(exit,cell)
+                lane = randint(0, params.numLanes-1)
                 j += 1
+            if j >= numNewCars * 3:
+                print "j >= numNewCars * 3 in addContinuing"
     
     def addEnteringCars(self, dt):
         numNewCars = int(dt * (1 - params.percentContinuing) * params.flow * params.numLanes)
@@ -140,6 +142,8 @@ class Road:
                 exit = randint(entrance, len(params.exits)-1)
                 cell = self.getCellForEntering(entrance,dt)
                 i += 1
+            if i >= numNewCars * 3:
+                print "i >= numNewCars * 3 in addEntering"
     def clearCarData(self):
         for car in self.cars:
             car.accel = 0

@@ -4,7 +4,7 @@ from tests import *
 #data frame
 testsNear = readFromFile("tests_far_linearCost_data.p")
 baseNear = readFromFile("baseCaseTests_far_linearCost_data.p")
-flows = [x * 0.5 for x in range(1,15)]
+flows = [x * 0.5 for x in range(1,12)]
 testColor = (0.5, 0.2, 0.2)
 baseColor = (0.2, 0.2, 0.5)
 numTurns = len(flows)
