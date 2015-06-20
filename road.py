@@ -53,7 +53,7 @@ class Road:
     def updateExitingCars(self):
         for car in self.cars:
             if car.position[0] >= car.exit:
-                if car.position[1] == 0:
+                if car.position[1] <= 1:
                     self.exitCar(car)
                 else:
                     self.markMissedExit(car)
@@ -61,7 +61,7 @@ class Road:
     def removeOOBCars(self):
         for car in self.cars:
             if car.position[0] > params.maxLaneLength:
-                if car.position[1] == 0:
+                if car.position[1] <= 1:
                    # print 'oob car exit'
                     self.exitCar(car)
                     if car in self.cars:
