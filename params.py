@@ -4,30 +4,26 @@ from math import pi
 class RoadParameters:
     cellLength = 5 #in meters
     initLaneLength = 10 #in cells
-    deltaVel = 2.5 #m/s
+    deltaVel = 2 #m/s
     maxDeltaVel = 5 #m/s
-    baseVel = 25 #m/s
+    baseVel = 26 #m/s
     maxAccel = 2.8 #m/s^2
     maxDecel = -3.0  #m/s^2
     numLanes = 5
     laneVels = [lane * deltaVel + baseVel for lane in range(numLanes)]
-    maxCarsPerHourPerLane =  2400 #cars / hour
-    maxFlowPerLane = [2400 * (  vel / 32.5) for vel in laneVels]  #cars / hour / lane - Empirical Data - pg 120
-    maxFlow = sum(maxFlowPerLane) / 3600
-    flowParam = 1
     rAlpha = 1.5
-    #flow = maxFlow * flowParam #parameter to alter
     flow = 3 #cars/second?
-    #exits = [15,50,100,150, 200]
     mile = 1600 #meters
-    exits = [int (float(i * mile) / float(cellLength)) for i in range(1,8)]#in cells
+    exits = [int (float(i * mile * 0.25) / float(cellLength)) for i in range(1,21)]#in cells
+    exitingRate = [ 1.0 / len(exits) for i in exits] #of cars that do exit, how are they distributed
+    overallExitRate = 1.0 #how many cars end up continuing along the road in the end, never exit
     maxLaneLength = exits[-1] #in cells
-    entrances = [int(exit - float(mile)/float(cellLength)) for exit in exits]#in cells
+    entrances = [int(exit - float(mile * 0.25)/float(cellLength)) for exit in exits]#in cells
     percentContinuing = 0.9 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
-    staticUpEpsilon = mile * 0.25 #meters
-    staticDownEpsilon = mile * 0.25 #meters
+    staticUpEpsilon = mile * 0.3 #meters
+    staticDownEpsilon = mile * 0.3 #meters
     def getPercentContinuing():
         return percentContinuing
 

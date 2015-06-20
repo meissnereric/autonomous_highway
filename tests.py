@@ -4,6 +4,7 @@ import do
 import when
 import baseHow
 import pickle
+import copy
 from time import time
 from params import *
 
@@ -140,7 +141,8 @@ def runBoth(numIters):
 
 def runSims(f, numIters):
     global myRoad
-    simStats = Statistics()
+    simStats = []
+    simStats.append(params)
     for flow in [x * 0.5 for x in range (1,12)]:
         print 'flow: ' + str(flow)
         stats.reset()
@@ -148,10 +150,19 @@ def runSims(f, numIters):
         print myRoad.turn
         params.flow = flow
         timeSim(f, numIters)
-        simStats.addAverages(stats)
-    fileName = str(f.__name__)+ "_far_linearCost_data.p"
+        simStats.append(copy.copy(stats))
+    fileName = str(f.__name__)+ "_normal_fast_5_15_2015_data.p"
     writeToFile(fileName, simStats)
     return simStats
+
+def readAndAverage(fileName):
+    tempStats = readFromFile(fileName)
+    tempParams = tempStats[0]
+    tempStats = tempStats[1:]
+    averages = Statistics()
+    for run in tempStats:
+        averages.addAverages(run)
+    return (tempParams, tempStats, averages)
 
 def writeToFile( fileName, stats):
     with open(fileName, "wb") as f:

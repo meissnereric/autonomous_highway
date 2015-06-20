@@ -1,6 +1,7 @@
 from math import floor
 from random import randint
 from params import params, stats
+from scipy.stats import rv_discrete
 import when
 import how
 CL = params.cellLength
@@ -115,15 +116,20 @@ class Road:
             if(len(lane.cells) >= params.maxLaneLength):
                 lane.cells = lane.cells[0 : params.maxLaneLength - 1]
 
+    def exitPosToIndex(self, pos):
+        for i, exit in enumerate(params.exits):
+            if exit == pos:
+                return i;
+
     def addContinuingCars(self, dt):
         numNewCars = int(dt * params.percentContinuing * params.flow * params.numLanes)
         for i in range(numNewCars):
-            exit = randint(0,len(params.exits)-1)
+            exit = self.exitPosToIndex(rv_discrete(values=(params.exits, params.exitingRate)).rvs(size=1))
             lane = randint(0, params.numLanes-1)
             cell = randint(0, self.newCells[lane]-1)
             j = 0
             while not self.addToCell(Car(cell, lane, params.exits[exit]), self.lanes[lane]) and j < numNewCars * 3:
-                exit = randint(0,len(params.exits)-1)
+                exit = self.exitPosToIndex(rv_discrete(values=(params.exits, params.exitingRate)).rvs(size=1))
                 cell = randint(0, self.newCells[lane]-1)
                 lane = randint(0, params.numLanes-1)
                 j += 1
@@ -134,12 +140,12 @@ class Road:
         numNewCars = int(dt * (1 - params.percentContinuing) * params.flow * params.numLanes)
         for i in range(numNewCars):
             entrance = randint(0, len(params.entrances)-1)
-            exit = randint(entrance, len(params.exits)-1)
+            exit = self.exitPosToIndex(rv_discrete(values=(params.exits[entrance:], params.exitingRate[entrance:])).rvs(size=1))
             cell = self.getCellForEntering(entrance, dt)
             i = 0
             while not self.addToCell(Car(cell.position[0], 0, params.exits[exit]), self.lanes[0]) and i < numNewCars * 3:
                 entrance = randint(0, len(params.entrances)-1)
-                exit = randint(entrance, len(params.exits)-1)
+                exit = self.exitPosToIndex(rv_discrete(values=(params.exits[entrance:], params.exitingRate[entrance:])).rvs(size=1))
                 cell = self.getCellForEntering(entrance,dt)
                 i += 1
             if i >= numNewCars * 3:
