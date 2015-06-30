@@ -34,6 +34,7 @@ def tests(myRoad):
 
     myRoad.updateLCs()
     stats.carsMakingLC[myRoad.turn] = myRoad.madeLC
+    stats.totalCars[myRoad.turn] = len(myRoad.cars)
     myRoad.cleanRoad()
    # print "Cars requesting LC: " + str(stats.carsRequestingLC[myRoad.turn]) #after when
    # print "Cars in how CS: " + str(stats.carsInCS[myRoad.turn]) #after how
@@ -135,23 +136,57 @@ def timeSim(f ,numIters):
 
 myRoad = road.Road()
 
-def runBoth(numIters):
-    runSims(tests, numIters)
-    runSims(baseCaseTests, numIters)
 
-def runSims(f, numIters):
+def runBothPc(numIters):
+    runPcSims(tests, numIters)
+    runPcSims(baseCaseTests, numIters)
+
+def runBothFlow(numIters):
+    runFlowSims(tests, numIters)
+    runFlowSims(baseCaseTests, numIters)
+
+def runPcSims(f, numIters):
     global myRoad
     simStats = []
+    params.flow = 5.5
     simStats.append(params)
-    for flow in [x * 0.5 for x in range (1,12)]:
-        print 'flow: ' + str(flow)
+    for pc in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
+        
+        stats.reset()
+        myRoad = road.Road()
+        params.flow = 0.5
+        timeSim(f, 100)
+        myRoad.turn = -1
+        
+        print 'pc: ' + str(pc)
         stats.reset()
         myRoad = road.Road()
         print myRoad.turn
+        params.percentContinuing = pc
+        timeSim(f, numIters)
+        simStats.append(copy.copy(stats))
+    fileName = str(f.__name__)+ "_uniform_percentCont_01-09_5_20_2015_data.p"
+    writeToFile(fileName, simStats)
+    return simStats
+
+def runFlowSims(f, numIters):
+    global myRoad
+    simStats = []
+    simStats.append(params)
+    for flow in [x * 0.5 for x in range (1,16)]:
+        print 'flow: ' + str(flow)
+        
+        stats.reset()
+        myRoad = road.Road()
+        params.flow = 0.5
+        timeSim(f, 100)
+        myRoad.turn = -1
+        
+        stats.reset()
         params.flow = flow
         timeSim(f, numIters)
         simStats.append(copy.copy(stats))
-    fileName = str(f.__name__)+ "_normal_fast_5_15_2015_data.p"
+    fileName = str(f.__name__)+ "_pc02_flow_0.5-7.5_5_25_2015_data.p"
     writeToFile(fileName, simStats)
     return simStats
 

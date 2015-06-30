@@ -14,16 +14,16 @@ class RoadParameters:
     rAlpha = 1.5
     flow = 3 #cars/second?
     mile = 1600 #meters
-    exits = [int (float(i * mile * 0.25) / float(cellLength)) for i in range(1,21)]#in cells
+    exits = [int (float(i * mile * 0.3) / float(cellLength)) for i in range(1,21)]#in cells
     exitingRate = [ 1.0 / len(exits) for i in exits] #of cars that do exit, how are they distributed
     overallExitRate = 1.0 #how many cars end up continuing along the road in the end, never exit
     maxLaneLength = exits[-1] #in cells
-    entrances = [int(exit - float(mile * 0.25)/float(cellLength)) for exit in exits]#in cells
-    percentContinuing = 0.9 #percentage of new cars on a road continuing
+    entrances = [int(exit - float(mile * 0.3)/float(cellLength)) for exit in exits]#in cells
+    percentContinuing = 0.2 #percentage of new cars on a road continuing
     maxEpsilonLook = 10  #in cells
     turnTime = 10 #in seconds
-    staticUpEpsilon = mile * 0.3 #meters
-    staticDownEpsilon = mile * 0.3 #meters
+    staticUpEpsilon = mile * 0.25 #meters
+    staticDownEpsilon = mile * 0.25 #meters
     def getPercentContinuing():
         return percentContinuing
 
@@ -69,6 +69,7 @@ class Statistics:
         self.costPerLaneChange = []
         self.turnTime = []
         self.statsPerSim = []
+        self.totalCars = []
         self.params = 0
     def newTurn(self, dt):
         self.numMissedCars.append(0)
@@ -79,6 +80,7 @@ class Statistics:
         self.carsDoLC.append(0)
         stats.costPerLaneChange.append(0)
         stats.turnTime.append(0)
+        stats.totalCars.append(0)
     def addAverages(self, stats):
         self.numMissedCars.append(average(stats.numMissedCars))
         self.numMadeCars.append(average(stats.numMadeCars))
@@ -88,6 +90,9 @@ class Statistics:
         self.carsDoLC.append(average(stats.carsDoLC))
         self.turnTime.append(average(stats.turnTime))
         self.costPerLaneChange.append(average(stats.costPerLaneChange))
+        if self.totalCars:
+            self.totalCars.append(average(stats.totalCars))
+        self.g = []
     def reset(self):
         self.numMissedCars = []
         self.numMadeCars = []
