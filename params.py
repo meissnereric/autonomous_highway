@@ -71,6 +71,7 @@ class Statistics:
         self.statsPerSim = []
         self.totalCars = []
         self.params = 0
+        self.g = []
     def newTurn(self, dt):
         self.numMissedCars.append(0)
         self.numMadeCars.append(0)
@@ -81,6 +82,30 @@ class Statistics:
         stats.costPerLaneChange.append(0)
         stats.turnTime.append(0)
         stats.totalCars.append(0)
+    def addMax(self, stats):
+        self.numMissedCars.append(halfMax(stats.numMissedCars))
+        self.numMadeCars.append(halfMax(stats.numMadeCars))
+        self.carsRequestingLC.append(halfMax(stats.carsRequestingLC))
+        self.carsInCS.append(halfMax(stats.carsInCS))
+        self.carsMakingLC.append(halfMax(stats.carsMakingLC))
+        self.carsDoLC.append(halfMax(stats.carsDoLC))
+        self.turnTime.append(halfMax(stats.turnTime))
+        self.costPerLaneChange.append(halfMax(stats.costPerLaneChange))
+        if self.totalCars:
+            self.totalCars.append(halfMax(stats.totalCars))
+        self.g.append(self.numMissedCars[-1] / self.numMadeCars[-1])
+    def addMin(self, stats):
+        self.numMissedCars.append(halfMin(stats.numMissedCars))
+        self.numMadeCars.append(halfMin(stats.numMadeCars))
+        self.carsRequestingLC.append(halfMin(stats.carsRequestingLC))
+        self.carsInCS.append(halfMin(stats.carsInCS))
+        self.carsMakingLC.append(halfMin(stats.carsMakingLC))
+        self.carsDoLC.append(halfMin(stats.carsDoLC))
+        self.turnTime.append(halfMin(stats.turnTime))
+        self.costPerLaneChange.append(halfMin(stats.costPerLaneChange))
+        if self.totalCars:
+            self.totalCars.append(halfMin(stats.totalCars))
+        self.g.append(self.numMissedCars[-1] / self.numMadeCars[-1])
     def addAverages(self, stats):
         self.numMissedCars.append(average(stats.numMissedCars))
         self.numMadeCars.append(average(stats.numMadeCars))
@@ -92,7 +117,7 @@ class Statistics:
         self.costPerLaneChange.append(average(stats.costPerLaneChange))
         if self.totalCars:
             self.totalCars.append(average(stats.totalCars))
-        self.g = []
+        self.g.append(self.numMissedCars[-1] / self.numMadeCars[-1])
     def reset(self):
         self.numMissedCars = []
         self.numMadeCars = []
@@ -127,6 +152,18 @@ def average(bigLst):
     else:
         return 0.0
 
-    
-
+def halfMax(bigLst):
+    if bigLst:
+        goodData = len(bigLst) / 2
+        lst = bigLst[-1 * goodData:] #only take the last half of the data. Because the road has to warm up always
+        return float(max(lst))
+    else:
+        return 0.0
+def halfMin(bigLst):
+    if bigLst:
+        goodData = len(bigLst) / 2
+        lst = bigLst[-1 * goodData:] #only take the last half of the data. Because the road has to warm up always
+        return float(min(lst))
+    else:
+        return 0.0
 stats = Statistics()

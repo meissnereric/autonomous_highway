@@ -173,12 +173,13 @@ def runFlowSims(f, numIters):
     global myRoad
     simStats = []
     simStats.append(params)
-    for flow in [x * 0.5 for x in range (1,16)]:
+    for flow in [x * 0.5 for x in range (1,11)]:
         print 'flow: ' + str(flow)
         
         stats.reset()
         myRoad = road.Road()
         params.flow = 0.5
+        params.cellLength = 12
         timeSim(f, 100)
         myRoad.turn = -1
         
@@ -186,7 +187,7 @@ def runFlowSims(f, numIters):
         params.flow = flow
         timeSim(f, numIters)
         simStats.append(copy.copy(stats))
-    fileName = str(f.__name__)+ "_pc02_flow_0.5-7.5_5_25_2015_data.p"
+    fileName = str(f.__name__)+ "_cellLength12_flow_0.5-5_7_6_2015_data.p"
     writeToFile(fileName, simStats)
     return simStats
 
@@ -195,9 +196,13 @@ def readAndAverage(fileName):
     tempParams = tempStats[0]
     tempStats = tempStats[1:]
     averages = Statistics()
+    mins = Statistics()
+    maxs = Statistics()
     for run in tempStats:
         averages.addAverages(run)
-    return (tempParams, tempStats, averages)
+        mins.addMin(run)
+        maxs.addMax(run)
+    return (tempParams, tempStats, averages, mins, maxs)
 
 def writeToFile( fileName, stats):
     with open(fileName, "wb") as f:

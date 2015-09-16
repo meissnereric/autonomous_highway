@@ -108,6 +108,91 @@ def getRealCars(real, fake):
                 break
     return realCS
 
+def getOptimumLaneCS(permCars, os, lane):
+    cars = copy.copy(permCars)
+    os.sort(key = lambda op: op.position[0])
+    maxCost = 10000000
+    if not cars:
+        return ([], maxCost)
+    CS = []
+    cost = 0.0
+    blockCars = [car for car in cars if car.position[0] <= os[-1].position[0]
+                                        and car.position[0] >= os[0].position[0] ]
+    Z = len(os) - len(blockCars)
+    blockCars = [car for car in blockCars if car.targetLane == os[0].position[1]]
+    
+    #todo update blockCar costs and maybe add the cars to their "safe zone" spots when able
+    bcCS = [ (car, lane.getCellByX(car.position[0])) for car in blockCars]
+    
+    for cs in bcCS:
+        CS.append(cs)
+    
+    removeCars(cars, blockCars)
+    for car in blockCars:
+        if car in cars:
+            print 'car from blockCars was not removed from cars'
+    (CR, CL) = doEpsilonPass(cars, os)
+    (CR,CL) = doEBPass(CR, CL, os)
+    (CR, CL) = doZPass(CR, CL, Z, os)
+    for car in CR:
+        if car.targetLane == car.position[1]:
+            print 'whyyy are you still in CR!'
+    for car in CL:
+        if car.targetLane == car.position[1]:
+            print 'whyyy are you still in CL!'
+    CR.sort(key = lambda c: c.position[0]) #CR[0] is min X
+    CL.sort(key = lambda c: c.position[0], reverse=True) #CL[0] is max X
+    CR = list(set(CR))
+    CL = list(set(CL))
+    for car in CR:
+        if car in CL:
+            print 'car is in both CR and CL' + str(car) + " " + str(car.position) + " targetLane: " + str(car.targetLane)
+            print "len os: " + str(len(os))
+            print "start/end: " + str(os[0].position) + " : " + str(os[-1].position)
+            if car in blockCars:
+                print 'also in blockCars'
+    
+    if CR or CL:
+        #print 'os / CR / CL'
+        s=""
+        for op in os:
+            s += str(op.position) + " "
+        #print s
+        s=""
+        for car in CR:
+            s += str(car.position) + " "
+        #print s
+        s=""
+        for car in CL:
+            s += str(car.position) + " "
+        #print s
+        #print ''
+
+    CL.sort(key = lambda c: c.position[0]) #CL[0] is max X
+    blockCars.sort(key = lambda c: c.position[0]) #CL[0] is max X
+    allCars = CR + blockCars + CL
+    if len(allCars) > len(OS):
+        possibleCombinations = [sublist for sublist in 
+                        (allCars[x:x+size] for x in range(len(OS) - Z + 1)) ]
+        for combo in possibleCombinations:
+            for i, op in enumerate(OS):
+                combo[i] = (combo[i],op)
+        for i, combo in enumerate(possibleCombinations):
+            if costCSTotal(combo) < finalCost:
+                finalCost = costCSTotal(combo)
+                finalCombination = combo
+    if len(allCars) == len(OS):
+        print "length equal"
+    if len(allCars) < len(OS):
+        print "length less than OS"
+
+    CS.sort(key = lambda pair: pair[1].position[0])
+    #print "lenCS: " + str(len(CS)) + " cost: " + str(cost)
+    #printCS(CS)
+    #print ''
+    return CS, costCSTotal(CS)
+
+
 def getBestLaneCS(permCars, os, lane):
     cars = copy.copy(permCars)
     os.sort(key = lambda op: op.position[0])
