@@ -86,8 +86,8 @@ class Road:
         self.cars.remove(car)
         stats.numMissedCars[self.turn] += 1
         #print 'Car missed its exit: ' + str(car.position) + " : " + str(car.exit) + " : " + str(car.d_es) 
-        #print "Car's target lane / priority: " + str(car.targetLane) + " : " + str(car.priority)
-       # print car
+       # print "Car's target lane / priority: " + str(car.targetLane) + " : " + str(car.priority)
+        #print car
 
     #Tested
     def updateLCs(self):

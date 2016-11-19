@@ -1,8 +1,61 @@
 from params import params
 import copy 
+import itertools
 
 #4-16-15 changes to how
 # newHow 
+def OptHow(road):
+    maxCost = 10000000
+    ActiveLanes = makeActiveLanes(road)
+    if not ActiveLanes:
+        return
+    ActiveLanes.sort()
+    #print ActiveLanes
+    for lane in ActiveLanes:
+        OS = getOpeningSets(lane, road)
+        OS.sort(key = lambda os: os[0].position[0])
+        if OS and OS[0] and OS[0][0].position[1] < params.numLanes-1:
+            upCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]+1]
+        else:
+            upCars = []
+        if OS and OS[0] and OS[0][0].position[1] > 0:
+
+            downCars = [car for car in road.cars if car.position[1] == OS[0][0].position[1]-1]
+        else:
+            downCars = []
+        for os in OS:
+            (csUp, costUp) = getOptimumLaneCS(upCars, os, road.lanes[lane])#todo getCars + makeCS
+            (csDown, costDown) = getOptimumLaneCS(downCars, os, road.lanes[lane])
+            #csUp = list(set(csUp))
+            #csDown = list(set(csDown))
+            if len(csUp) == len(csDown):
+                if costUp < costDown and maxCost > costUp > 0 and csUp:
+                    realCars = getRealCars(upCars, csUp)
+                    removeCS(upCars, realCars)
+                    #print 'addFCS Up cuz costs: ' + str(costUp)
+                    #printCS(realCars)
+                    road.addFCS(realCars)
+                elif csDown:
+                    #print 'addFCS Down cuz costs' + str(costDown)
+                    realCars = getRealCars(downCars, csDown)
+                    removeCS(downCars, realCars)
+                    #printCS(realCars)
+                    road.addFCS(realCars)#todo don't add as platoon or only some
+            else:
+                if len(csUp) > len(csDown):
+                    realCars = getRealCars(upCars, csUp)
+                    #print 'addFCS Up due to length: ' + str(len(csUp))
+                    removeCS(upCars, realCars)
+                    #printCS(realCars)
+                    road.addFCS(realCars)
+                else:
+                    realCars = getRealCars(downCars, csDown)
+                    #print 'addFCS Down due to length: ' + str(len(csDown))
+                    removeCS(downCars, realCars)
+                    #printCS(realCars)
+                    road.addFCS(realCars)#todo don't add as platoon or only some
+
+
 def How(road):
     maxCost = 10000000
     ActiveLanes = makeActiveLanes(road)
@@ -168,23 +221,76 @@ def getOptimumLaneCS(permCars, os, lane):
         #print s
         #print ''
 
+
+
+##################### New Stuff / Optimum Changes ###############################
     CL.sort(key = lambda c: c.position[0]) #CL[0] is max X
     blockCars.sort(key = lambda c: c.position[0]) #CL[0] is max X
     allCars = CR + blockCars + CL
-    if len(allCars) > len(OS):
+    finalCost = 100000000000
+    if len(allCars) == 0:
+        return ([], 0)
+    ## Cars > OS ##
+    if len(allCars) > len(os):
+        print "C > OS"
+        #All [(Car,Op), (C,O), ...] vehicle sets (GV) 
         possibleCombinations = [sublist for sublist in 
-                        (allCars[x:x+size] for x in range(len(OS) - Z + 1)) ]
+                        (allCars[x:x+Z] for x in range(len(os) - Z + 1)) ]
+
+        print "Length: " + str(len(possibleCombinations))
+        print "Single combo before opening: " + str(possibleCombinations[0])
         for combo in possibleCombinations:
-            for i, op in enumerate(OS):
+            for i, op in enumerate(os):
                 combo[i] = (combo[i],op)
+        print "Single combo after opening: " + str(possibleCombinations[0])
         for i, combo in enumerate(possibleCombinations):
             if costCSTotal(combo) < finalCost:
                 finalCost = costCSTotal(combo)
                 finalCombination = combo
-    if len(allCars) == len(OS):
-        print "length equal"
-    if len(allCars) < len(OS):
-        print "length less than OS"
+        print "Final combo: " + str(finalCombination)
+        CS = finalCombination
+    ## Cars == OS ##
+    if len(allCars) == len(os):
+        print " C == OS "
+        combo = []
+        for i, op in enumerate(os):
+            combo.append((allCars[i],op))
+        print "Final combo: " + str(combo)
+        CS = combo
+    ## Cars < OS ##
+    if len(allCars) < len(os):
+        print " C < OS "
+        #All [(Car,Op), (C,O), ...] vehicle sets (GV) 
+        finalCombination = []
+        print "Length OS: " + str(len(os))
+        print "Length Cars: " + str(len(allCars))
+        possibleCombinations = list(itertools.combinations(os, len(allCars)))
+        #possibleCombinations = [sublist for sublist in 
+         #               (os[x:x+len(allCars)] for x in range(len(os)- len(allCars) +1)) ]
+        print "Length: " + str(len(possibleCombinations))
+        listCombos = []
+        for j, combo in enumerate(possibleCombinations):
+            listCombos.append(list(combo))
+            for i, car in enumerate(allCars):
+                listCombos[j][i] = [car, listCombos[j][i]]
+        for combo in listCombos:
+            #print combo
+            for i, car in enumerate(allCars):
+                #print car
+                for slot in enumerate(combo):
+                    #print slot
+                    if abs(car.position[0] - slot[1][1].position[0]) < params.maxEpsilonLook:
+                        if combo in listCombos:
+                            listCombos.remove(combo)
+
+        for i, combo in enumerate(listCombos):
+            if costCSTotal(combo) < finalCost:
+                print "Final Combo: " + str(combo)
+                finalCost = costCSTotal(combo)
+                finalCombination = combo
+        #print "Final combo: " + str(finalCombination)
+        CS = finalCombination
+################################## End ######################################
 
     CS.sort(key = lambda pair: pair[1].position[0])
     #print "lenCS: " + str(len(CS)) + " cost: " + str(cost)

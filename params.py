@@ -2,28 +2,31 @@ from math import pi
 
 #1600 meters in a mile
 class RoadParameters:
-    cellLength = 5 #in meters
-    initLaneLength = 10 #in cells
-    deltaVel = 2 #m/s
-    maxDeltaVel = 5 #m/s
-    baseVel = 26 #m/s
-    maxAccel = 2.8 #m/s^2
-    maxDecel = -3.0  #m/s^2
-    numLanes = 5
-    laneVels = [lane * deltaVel + baseVel for lane in range(numLanes)]
-    rAlpha = 1.5
-    flow = 3 #cars/second?
-    mile = 1600 #meters
-    exits = [int (float(i * mile * 0.3) / float(cellLength)) for i in range(1,21)]#in cells
-    exitingRate = [ 1.0 / len(exits) for i in exits] #of cars that do exit, how are they distributed
-    overallExitRate = 1.0 #how many cars end up continuing along the road in the end, never exit
-    maxLaneLength = exits[-1] #in cells
-    entrances = [int(exit - float(mile * 0.3)/float(cellLength)) for exit in exits]#in cells
-    percentContinuing = 0.2 #percentage of new cars on a road continuing
-    maxEpsilonLook = 10  #in cells
-    turnTime = 10 #in seconds
-    staticUpEpsilon = mile * 0.25 #meters
-    staticDownEpsilon = mile * 0.25 #meters
+    def __init__(self):
+        self.cellLength = 5 #in meters
+        self.initLaneLength = 10 #in cells
+        self.deltaVel = 2 #m/s
+        self.maxDeltaVel = 5 #m/s
+        self.baseVel = 26 #m/s
+        self.maxAccel = 2.8 #m/s^2
+        self.maxDecel = -3.0  #m/s^2
+        self.numLanes = 5
+        self.laneVels = [lane * self.deltaVel + self.baseVel for lane in range(self.numLanes)]
+        self.rAlpha = 1.5
+        self.flow = 0.5 #cars/second?
+        self.mile = 1600 #meters
+        self.numExits = 20
+        self.exits = [int (float(i * 500) / float(self.cellLength)) for i in range(5,self.numExits)]#in cells
+        self.exitingRate = [ 1.0 / len(self.exits) for i in self.exits] #of cars that do exit, how are they distributed
+        self.overallExitRate = 1.0 #how many cars end up continuing along the road in the end, never exit
+        self.maxLaneLength = self.exits[-1] #in cells
+        self.entrances = [int(exit - float(500)/float(self.cellLength)) for exit in self.exits]#in cells
+        self.percentContinuing = 0.2 #percentage of new cars on a road continuing
+        self.maxEpsilonLook = 15  #in cells
+        self.staticUpEpsilon = self.mile * 0.25 #meters
+        self.staticDownEpsilon = self.mile * 0.25 #meters
+        self.turnTime = self.getTurnTime(max(self.laneVels))
+
     def getPercentContinuing():
         return percentContinuing
 
@@ -31,16 +34,17 @@ class RoadParameters:
         return 1 - percentContinuing
 
 #pg 105
-def getTurnTime(vel):
-    b = params.maxEpsilonLook * params.cellLength
-    a = params.maxAccel
-    v_l = vel
-    v_d = vel - params.deltaVel
-    v_max = v_l + params.maxDeltaVel
-    t_a  = (v_max - v_l) / a #time to accelerate to max velocity
-    x_a = v_l * t_a + 0.5 * a * (t_a)**2 #car position when max velocity is reached
-    x_a_d = b + v_d * t_a
-    t_v = (x_a_d - x_a) / (v_max - v_d)
+    def getTurnTime(self, vel):
+        b = self.maxEpsilonLook * self.cellLength
+        a = self.maxAccel
+        v_l = vel
+        v_d = vel - self.deltaVel
+        v_max = v_l + self.maxDeltaVel
+        t_a  = (v_max - v_l) / a #time to accelerate to max velocity
+        x_a = v_l * t_a + 0.5 * a * (t_a)**2 #car position when max velocity is reached
+        x_a_d = b + v_d * t_a
+        t_v = (x_a_d - x_a) / (v_max - v_d)
+        return t_a + t_v
 
     
    # print ''
@@ -53,7 +57,6 @@ def getTurnTime(vel):
    # print x_a
    # print t_v
    # print t_a + t_v
-    return t_a + t_v
 
 params = RoadParameters()
 

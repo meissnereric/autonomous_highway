@@ -1,0 +1,4 @@
+9-22 simulation is to test how much cell length begin @ 30m affects the results. Are we still competetive? What meter
+distances should we use? Are we platooned or no??? 
+
+See "Distributed Platoon Assignment and Lane Selection for Traffic Flow Optimization" for worries. 

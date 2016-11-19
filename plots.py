@@ -21,8 +21,10 @@ numTurns = len(flows)
 testNormalG = []
 baseNormalG = []
 for i in range(numTurns):
-    testNormalG.append( float(testsNormal.numMissedCars[i]) / float(testsNormal.numMadeCars[i]))
-    baseNormalG.append( float(baseNormal.numMissedCars[i]) / float(baseNormal.numMadeCars[i]))
+    testNormalG.append( float(testsNormal.numMissedCars[i]) / float(testsNormal.numMadeCars[i] +
+        testsNormal.numMissedCars[i]))
+    baseNormalG.append( float(baseNormal.numMissedCars[i]) / float(baseNormal.numMadeCars[i] +
+        baseNormal.numMissedCars[i]))
 
 
 figure(figsize=(10,7.5))

@@ -7,14 +7,54 @@ import pickle
 import copy
 from time import time
 from params import *
+import copy
 
 
 def noTime(myRoad):
     global stats
-    params.turnTime = max([getTurnTime(vel) for vel in params.laneVels])
     stats.params = params
     stats.newTurn(params.turnTime)
     myRoad.updateRoad(params.turnTime)
+
+def optTests(myRoad):
+    global stats
+    myRoad.baseCase = False
+    when.When(myRoad)
+    stats.carsRequestingLC[myRoad.turn] = len([car for car in myRoad.cars if car.position[1] != car.targetLane])
+    how.OptHow(myRoad)
+    optSum = 0
+    testSum = 0
+    for cs in myRoad.FCS:
+        print cs[0]
+        cost = how.costCS(cs)
+        optSum += cost
+        print cost
+    print len(myRoad.FCS)
+    print optSum
+    myRoad.FCS = []
+    how.How(myRoad)
+    for cs in myRoad.FCS[len(myRoad.FCS)-1:]:
+        print cs[0]
+        cost = how.costCS(cs)
+        testSum += cost
+        print cost
+    print len(myRoad.FCS)
+    print testSum
+    stats.carsInCS[myRoad.turn] = len(myRoad.FCS)
+    
+    myRoad.clc = do.do(myRoad.FCS)
+    myRoad.computeCost()
+    stats.carsDoLC[myRoad.turn] = len(myRoad.clc)
+    if myRoad.clc:
+        stats.costPerLaneChange[myRoad.turn] = myRoad.totalCost[myRoad.turn] / float(len(myRoad.clc))
+    else:
+        stats.costPerLaneChange[myRoad.turn] = 0
+
+    myRoad.updateLCs()
+    stats.carsMakingLC[myRoad.turn] = myRoad.madeLC
+    stats.totalCars[myRoad.turn] = len(myRoad.cars)
+    myRoad.cleanRoad()
+
 
 def tests(myRoad):
     global stats
@@ -131,8 +171,8 @@ def timeSim(f ,numIters):
         turn = timer(f, myRoad)
         stats.turnTime[myRoad.turn] = turn
         totalTime += turn
-        print str(turn) + " : " + str(totalTime)
-        print ''
+#        print str(turn) + " : " + str(totalTime)
+#        print ''
 
 myRoad = road.Road()
 
@@ -145,12 +185,44 @@ def runBothFlow(numIters):
     runFlowSims(tests, numIters)
     runFlowSims(baseCaseTests, numIters)
 
-def runPcSims(f, numIters):
+
+### Runs sensitivity analysis for k_threshold parameter
+def runKTSims(f, numIters):
     global myRoad
     simStats = []
-    params.flow = 5.5
     simStats.append(params)
-    for pc in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
+    for k_t in [10,15,20,25,30]: # 5
+        print 'k_t: ' + str(k_t)
+        for flow in [float(x) for x in range (6,7)]: # 5
+            print 'flow: ' + str(flow)
+            
+            stats.reset()
+            myRoad = road.Road()
+            params.flow = 0.5
+            timeSim(f, 100)
+            myRoad.turn = -1
+            
+            print
+            print "****************************************************"       
+            print
+
+            stats.reset()
+            params.flow = flow
+            params.maxEpsilonLook = k_t
+            params.turnTime = params.getTurnTime(max(params.laneVels))
+            print "Turn time: ", params.turnTime
+            timeSim(f, numIters)
+            simStats.append(copy.copy(stats))
+    fileName = str(f.__name__)+ "_k_thresh_10-30_flow_6.0_2_8_2016_data.p"
+    writeToFile(fileName, simStats)
+    return simStats
+
+### Runs sensitivity analsis for Epsilon parameter
+def runEpSims(f, numIters):
+    global myRoad
+    simStats = []
+    simStats.append(params)
+    for r_alpha in [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]:
         
         stats.reset()
         myRoad = road.Road()
@@ -158,36 +230,72 @@ def runPcSims(f, numIters):
         timeSim(f, 100)
         myRoad.turn = -1
         
-        print 'pc: ' + str(pc)
+        print 'r_alpha: ' + str(r_alpha)
         stats.reset()
-        myRoad = road.Road()
-        print myRoad.turn
-        params.percentContinuing = pc
+        #myRoad = road.Road()
+        params.flow = 3.0
+        params.rAlpha = r_alpha
         timeSim(f, numIters)
         simStats.append(copy.copy(stats))
-    fileName = str(f.__name__)+ "_uniform_percentCont_01-09_5_20_2015_data.p"
+    fileName = str(f.__name__)+ "_r_alpha_changing_1.0-3.0_flow3_1-15-2016_data.p"
     writeToFile(fileName, simStats)
     return simStats
 
+#p, s, a, _, _ = readAndAverage("tests_r_alpha_changing_1.0-3.0_flow3_1-15-2016_data.p")
+
+
+def runAlphaSims(f, numIters):
+    global myRoad
+    simStats = []
+    simStats.append(params)
+    for r_alpha in [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]: # 9
+        for flow in [x * 0.5 for x in range (1,12)]: # 11 
+            print 'flow: ' + str(flow)
+            
+            stats.reset()
+            myRoad = road.Road()
+            params.flow = 0.5
+            timeSim(f, 100)
+            myRoad.turn = -1
+            
+            print
+            print "****************************************************"       
+            print
+
+            stats.reset()
+            params.flow = flow
+            params.rAlpha = r_alpha
+            timeSim(f, numIters)
+            simStats.append(copy.copy(stats))
+    fileName = str(f.__name__)+ "_rAlpha_1.0-3.0_flow_0.5-5.5_1_18_2016_data.p"
+    writeToFile(fileName, simStats)
+    return simStats
+
+#### This is the core testing function #####
+#### Run as runFlowSims(tests,100) to run the tests() function 100 times and record the results in a *.p file. 
 def runFlowSims(f, numIters):
     global myRoad
     simStats = []
     simStats.append(params)
-    for flow in [x * 0.5 for x in range (1,11)]:
+ #   for flow in [x * 0.5 for x in range (1,11)]:
+    for flow in [x * 0.5 for x in range(1,13)]:
         print 'flow: ' + str(flow)
         
         stats.reset()
         myRoad = road.Road()
         params.flow = 0.5
-        params.cellLength = 12
         timeSim(f, 100)
         myRoad.turn = -1
         
+        print
+        print "****************************************************"       
+        print
+
         stats.reset()
         params.flow = flow
         timeSim(f, numIters)
         simStats.append(copy.copy(stats))
-    fileName = str(f.__name__)+ "_cellLength12_flow_0.5-5_7_6_2015_data.p"
+    fileName = str(f.__name__)+ "_flow_0.5-6.0_2_8_2016_data.p"
     writeToFile(fileName, simStats)
     return simStats
 
