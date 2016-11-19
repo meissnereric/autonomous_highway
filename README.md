@@ -1,5 +1,5 @@
 # Autonomous Highway
-This is the code used in [Optimizing Departures of Automated Vehicles from Highways while Maintaining Mainline Capacity http://ieeexplore.ieee.org/document/7487015/]
+This is the code used in [Optimizing Departures of Automated Vehicles from Highways while Maintaining Mainline Capacity] (http://ieeexplore.ieee.org/document/7487015/)
 
 
 The test framework for running the code exists in tests.py.
