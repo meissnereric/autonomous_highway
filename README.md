@@ -10,9 +10,8 @@ To simply run the code and see the output logged in a *.p file do the following:
 From a terminal:
 ```
 $> python
-from tests import *
-
-p,s,a = runFlowSims(tests,100) # returns parameters of the run, all statistics of the run, and averages of those statistics
+> from tests import *
+> p,s,a = runFlowSims(tests,100) # returns parameters of the run, all statistics of the run, and averages of those statistics
 .
 . (It will take some time to run. If you cancel the run early, no data will be saved (I know :( ))
 .
